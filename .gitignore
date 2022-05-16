@@ -102,3 +102,10 @@ dist
 
 # TernJS port file
 .tern-port
+package-lock.json
+_config.yml
+.DS_Store
+Thumbs.db
+db.json
+.deploy_git/
+public
