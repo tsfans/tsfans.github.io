@@ -109,3 +109,4 @@ Thumbs.db
 db.json
 .deploy_git/
 public
+.idea
