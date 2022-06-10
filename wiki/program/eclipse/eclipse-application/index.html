@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8">
+    
+    <title>eclipse application | tsfans的个人wiki</title>
+    
+    
+        <meta name="keywords" content="eclipse application">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="1.项目结构 application model This model contains the parts of the application as individual model elements and their hierarchical relationship.  windows parts  views editors  menus toolbars h">
+<meta property="og:type" content="article">
+<meta property="og:title" content="eclipse application">
+<meta property="og:url" content="https://tsfans.github.io/wiki/program/eclipse/eclipse-application/index.html">
+<meta property="og:site_name" content="tsfans的个人wiki">
+<meta property="og:description" content="1.项目结构 application model This model contains the parts of the application as individual model elements and their hierarchical relationship.  windows parts  views editors  menus toolbars h">
+<meta property="og:locale">
+<meta property="article:published_time" content="2022-05-13T00:45:58.000Z">
+<meta property="article:modified_time" content="2022-06-10T03:46:07.165Z">
+<meta property="article:author" content="tsfans">
+<meta name="twitter:card" content="summary">
+    
+
+    
+
+    
+        <link rel="icon" href="/images/favicon.ico">
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="tsfans的个人wiki" type="application/atom+xml">
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">tsfans的个人wiki</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">首页</a>
+                
+                    <a class="main-nav-link" href="/archives">归档</a>
+                
+                    <a class="main-nav-link" href="/categories">分类</a>
+                
+                    <a class="main-nav-link" href="/tags">标签</a>
+                
+                    <a class="main-nav-link" href="/about">关于</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="/images/avatar.png">
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something...">
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">首页</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">归档</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">分类</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">标签</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">关于</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="/images/avatar.png">
+            <h2 id="name">tsfans</h2>
+            <h3 id="title">Programmer</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>KunMing, China</span>
+            <a id="follow" target="_blank" href="https://github.com/tsfans/" rel="external nofollow noopener noreferrer">FOLLOW</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                24
+                <span>posts</span>
+            </div>
+            <div class="article-info-block">
+                0
+                <span>tag</span>
+            </div>
+        </div>
+        
+        <div class="profile-block social-links">
+            <table>
+                <tr>
+                    
+                    
+                    <td>
+                        <a href="https://github.com/tsfans/" target="_blank" title="github" class="tooltip" rel="external nofollow noopener noreferrer">
+                            <i class="fa fa-github"></i>
+                        </a>
+                    </td>
+                    
+                </tr>
+            </table>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id="categories">
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id="allExpand" href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            plan
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            2022
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/plan/2022/m5/">m5</a></li>  <li class="file"><a href="/wiki/plan/2022/m6/">m6</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            program
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            algorithm
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/algorithm/Datastructure/">Datastructure</a></li>  <li class="file"><a href="/wiki/program/algorithm/Sorting/">Sorting</a></li>  <li class="file"><a href="/wiki/program/algorithm/BFS/">Breadth First Search</a></li>  <li class="file"><a href="/wiki/program/algorithm/DFS/">Depth First Search</a></li>  <li class="file"><a href="/wiki/program/algorithm/DP/">Dynamic Planning</a></li>  <li class="file"><a href="/wiki/program/algorithm/two-pointer/">Two Pointer</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            database
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/database/MySQL/">MySQL</a></li>  <li class="file"><a href="/wiki/program/database/Redis/">Redis</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            eclipse
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file active"><a href="/wiki/program/eclipse/eclipse-application/">eclipse application</a></li>  <li class="file"><a href="/wiki/program/eclipse/leetcode-plugin/">leetcode plugin for eclipse</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            interview
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            history
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/interview/history/202203/">202203</a></li>  <li class="file"><a href="/wiki/program/interview/history/202204/">202204</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            java
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/java/spring/">Spring</a></li>  <li class="file"><a href="/wiki/program/java/springBoot/">Spring Boot</a></li>  <li class="file"><a href="/wiki/program/java/core-java/">Core Java</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            message queue
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/message%20queue/Kafka/">Kafka</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            network
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/network/network/">Network</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            operation system
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/operation%20system/Linux/">Linux</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            system design
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/system%20design/DDIA/">Design Data-Intensive Application</a></li>  <li class="file"><a href="/wiki/program/system%20design/OOD/">Object-Oriented Design</a></li>  <li class="file"><a href="/wiki/program/system%20design/system-design/">System Design</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            work
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/work/remote-job/">Remote Jobs</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-program/eclipse/eclipse-application" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/program/">program</a><i class="fa fa-angle-right"></i><a class="article-category-link" href="/categories/program/eclipse/">eclipse</a>
+    </div>
+
+                        
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/wiki/program/eclipse/eclipse-application/">
+            <time datetime="2022-05-13T00:45:58.000Z" itemprop="datePublished">2022-05-13</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                            <div class="article-meta-button">
+                                <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/tsfans/tsfans.github.io/raw/main/source/_posts/program/eclipse/eclipse-application.md"> Source </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/tsfans/tsfans.github.io/edit/main/source/_posts/program/eclipse/eclipse-application.md"> Edit </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/tsfans/tsfans.github.io/commits/main/source/_posts/program/eclipse/eclipse-application.md"> History </a>
+                            </div>
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            eclipse application
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+                <div id="toc" class="toc-article">
+                <strong class="toc-title">Catalogue</strong>
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84"><span class="toc-number">1.</span> <span class="toc-text">1.项目结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#application-model"><span class="toc-number">1.1.</span> <span class="toc-text">application model</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#overview-of-the-model-objects"><span class="toc-number">1.2.</span> <span class="toc-text">overview of the model
+objects</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#extending-the-application-model-from-other-plug-ins"><span class="toc-number">1.3.</span> <span class="toc-text">Extending
+the application model from other plug-ins</span></a></li></ol></li></ol>
+                </div>
+            
+        
+        
+            <h2 id="项目结构">1.项目结构</h2>
+<h3 id="application-model">application model</h3>
+<p>This model contains the parts of the application as individual model
+elements and their hierarchical relationship.</p>
+<ul>
+<li><p>windows</p></li>
+<li><p>parts</p>
+<ul>
+<li>views</li>
+<li>editors</li>
+</ul></li>
+<li><p>menus</p></li>
+<li><p>toolbars</p></li>
+<li><p>handlers</p></li>
+<li><p>commands</p></li>
+<li><p>key bindings</p></li>
+<li><p>has attributes which describe its current state</p></li>
+<li><p>contains links to Java classes or static resources</p>
+<ul>
+<li>java classes: bundleclass://test/test.parts.MySavePart</li>
+<li>static resources:
+platform:/plugin/com.example.plugin/icons/save_edit.gif</li>
+</ul></li>
+<li><p>The application model is extensible, e.g., other plug-ins can
+contribute to it via model processors and model fragments.</p></li>
+</ul>
+<h3 id="overview-of-the-model-objects">overview of the model
+objects</h3>
+<ul>
+<li>application: MApplication
+<ul>
+<li>Describes the application object. All other model elements are
+contained in this object.</li>
+</ul></li>
+<li>window
+<ul>
+<li>MWindow</li>
+<li>MTrimmedWindow: can contain trimbars (which can hold toolbars).</li>
+</ul></li>
+<li>parts: MPart
+<ul>
+<li>Parts can be stacked or positioned next to each other depending on
+the container into which they are dropped.</li>
+<li>A part can have a drop-down menu, context menus and a toolbar.</li>
+<li>Parts can be classified as views and editors.
+<ul>
+<li>views: display and modify a set of data. change data don't need to
+explicitly save the editor content</li>
+<li>editors: modify a single data element. change data has to explicitly
+save the editor content</li>
+</ul></li>
+</ul></li>
+<li>parts containers
+<ul>
+<li>Part Stack: A part stack arranges its children similar to a
+browser</li>
+<li>Part Sash Container: displays all its children at the same time
+either horizontally or vertically aligned.</li>
+</ul></li>
+<li>perspective
+<ul>
+<li>A perspective is an optional container for other part containers and
+parts.</li>
+<li>It is presented by MPerspective objects, which must be placed in an
+MPerspectiveStack object.</li>
+<li>EPartService: Switching perspectives</li>
+</ul></li>
+<li>MAddon: A self-contained component typically without user interface.
+It can register for events in the application life cycle and handle
+these events.</li>
+<li>MDirtyable
+<ul>
+<li>Property of MPart which can be injected. If set to true, this
+property informs the Eclipse platform that this Part contains unsaved
+data (is dirty)</li>
+<li>In a handler you can query this property to provide a save
+possibility.</li>
+</ul></li>
+<li>MPartDescriptor
+<ul>
+<li>a template for new parts.</li>
+<li>A new part based on this part descriptor can be created and shown
+via the Eclipse framework.</li>
+</ul></li>
+<li>Snippets
+<ul>
+<li>Snippets can be used to pre-configure model parts which you want to
+create via your program.</li>
+</ul></li>
+</ul>
+<h3 id="extending-the-application-model-from-other-plug-ins">Extending
+the application model from other plug-ins</h3>
+<ul>
+<li>contributions
+<ul>
+<li>Static contributions: text files(fragments or model fragments.)</li>
+<li>Dynamic contributions: java classes(processors or model
+processors.)</li>
+</ul></li>
+<li>model fragments
+<ul>
+<li>A model fragment is a file which typically ends with the .e4xmi
+extension.</li>
+</ul></li>
+</ul>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/wiki/program/database/MySQL/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    MySQL
+                
+            </div>
+        </a>
+    
+    
+        <a href="/wiki/program/eclipse/leetcode-plugin/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">leetcode plugin for eclipse</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            tsfans &copy; 2022 
+            <a rel="external nofollow noopener noreferrer" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png"></a>
+            <br> Powered by <a href="http://hexo.io/" target="_blank" rel="external nofollow noopener noreferrer">Hexo</a>. Theme - <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/zthxxx/hexo-theme-Wikitten">wikitten</a>
+            
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+            
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>
