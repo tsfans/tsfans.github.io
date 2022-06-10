@@ -3,19 +3,21 @@
 <head>
     <meta charset="utf-8">
     
-    <title>Archive | tsfans的个人wiki</title>
+    <title>Rate Limiter | tsfans的个人wiki</title>
     
     
-        <meta name="keywords" content="tsfans的个人wiki">
+        <meta name="keywords" content="Rate Limiter">
     
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <meta name="description" content="记录我所知道的一切">
-<meta property="og:type" content="website">
-<meta property="og:title" content="tsfans的个人wiki">
-<meta property="og:url" content="https://tsfans.github.io/archives/index.html">
+    <meta name="description" content="1.固定窗口 实现 内部维护一个计数器，将单位时间段当做一个窗口，计数器记录这个窗口接收请求的次数。如果单位时间请求没有到达阈值，则计数器加1，正常请求；如果到达阈值，则访问拒绝；在开启下一个单位时间窗口时，计数器清0。 优点 实现简单 缺点  无法解决临界问题。假设我们的限流时10次&#x2F;秒，在0.8s-1s之前请求5次，在1s-1.2s请求五次，按照固定窗口限流算法，他们在单位时间都">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rate Limiter">
+<meta property="og:url" content="https://tsfans.github.io/wiki/program/system%20design/rate-limit/index.html">
 <meta property="og:site_name" content="tsfans的个人wiki">
-<meta property="og:description" content="记录我所知道的一切">
+<meta property="og:description" content="1.固定窗口 实现 内部维护一个计数器，将单位时间段当做一个窗口，计数器记录这个窗口接收请求的次数。如果单位时间请求没有到达阈值，则计数器加1，正常请求；如果到达阈值，则访问拒绝；在开启下一个单位时间窗口时，计数器清0。 优点 实现简单 缺点  无法解决临界问题。假设我们的限流时10次&#x2F;秒，在0.8s-1s之前请求5次，在1s-1.2s请求五次，按照固定窗口限流算法，他们在单位时间都">
 <meta property="og:locale">
+<meta property="article:published_time" content="2022-06-10T08:27:41.000Z">
+<meta property="article:modified_time" content="2022-06-10T08:55:51.768Z">
 <meta property="article:author" content="tsfans">
 <meta name="twitter:card" content="summary">
     
@@ -244,9 +246,9 @@
                      </ul> 
                     </li> 
                     
-                    <li class="directory">
+                    <li class="directory open">
                         <a href="#" data-role="directory">
-                            <i class="fa fa-folder"></i>
+                            <i class="fa fa-folder-open"></i>
                             &nbsp;
                             program
                         </a>
@@ -332,13 +334,13 @@
                          <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/operation%20system/Linux/">Linux</a></li>  </ul> 
                     </li> 
                     
-                    <li class="directory">
+                    <li class="directory open">
                         <a href="#" data-role="directory">
-                            <i class="fa fa-folder"></i>
+                            <i class="fa fa-folder-open"></i>
                             &nbsp;
                             system design
                         </a>
-                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/system%20design/DDIA/">Design Data-Intensive Application</a></li>  <li class="file"><a href="/wiki/program/system%20design/OOD/">Object-Oriented Design</a></li>  <li class="file"><a href="/wiki/program/system%20design/system-design/">System Design</a></li>  <li class="file"><a href="/wiki/program/system%20design/rate-limit/">Rate Limiter</a></li>  </ul> 
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/system%20design/DDIA/">Design Data-Intensive Application</a></li>  <li class="file"><a href="/wiki/program/system%20design/OOD/">Object-Oriented Design</a></li>  <li class="file"><a href="/wiki/program/system%20design/system-design/">System Design</a></li>  <li class="file active"><a href="/wiki/program/system%20design/rate-limit/">Rate Limiter</a></li>  </ul> 
                     </li> 
                      </ul> 
                     </li> 
@@ -422,168 +424,171 @@
     <div id="toTop" class="fa fa-angle-up"></div>
 </aside>
             
-            <section id="main"><div class="timeline timeline-wrap">
-    
-            <div class="timeline-row timeline-row-major">
-                <span class="node"><i class="fa fa-calendar-o"></i></span>
-                <h1 class="title"><a href="/archives/2022/">2022</a></h1>
-            </div>
-    
-            <div class="timeline-row timeline-row-major">
-                <span class="node"><i class="fa fa-calendar"></i></span>
-                <h1 class="title"><a href="/archives/2022/06/">2022-06</a><span class="archive-list-count">6</span></h1>
-            </div>
-    
-        <div class="timeline-row">
-            <span class="node"></span>
-            <div class="content">
+            <section id="main"><article id="post-program/system design/rate-limit" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/program/">program</a><i class="fa fa-angle-right"></i><a class="article-category-link" href="/categories/program/system-design/">system design</a>
+    </div>
+
+                        
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/wiki/program/system%20design/rate-limit/">
+            <time datetime="2022-06-10T08:27:41.000Z" itemprop="datePublished">2022-06-10</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                            <div class="article-meta-button">
+                                <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/tsfans/tsfans.github.io/raw/main/source/_posts/program/system design/rate-limit.md"> Source </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/tsfans/tsfans.github.io/edit/main/source/_posts/program/system design/rate-limit.md"> Edit </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/tsfans/tsfans.github.io/commits/main/source/_posts/program/system design/rate-limit.md"> History </a>
+                            </div>
+                        
+                    </div>
+                
                 
     
-        <h1 itemprop="name">
-            <a class="timeline-article-title" href="/wiki/program/system%20design/rate-limit/">Rate Limiter</a>
+        <h1 class="article-title" itemprop="name">
+            Rate Limiter
         </h1>
     
 
-                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+                <div id="toc" class="toc-article">
+                <strong class="toc-title">Catalogue</strong>
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%BA%E5%AE%9A%E7%AA%97%E5%8F%A3"><span class="toc-number">1.</span> <span class="toc-text">1.固定窗口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3"><span class="toc-number">2.</span> <span class="toc-text">2.滑动窗口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%96%97%E7%AE%97%E6%B3%95"><span class="toc-number">3.</span> <span class="toc-text">3.漏斗算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%A4%E7%89%8C%E6%A1%B6%E7%AE%97%E6%B3%95"><span class="toc-number">4.</span> <span class="toc-text">4.令牌桶算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">5.</span> <span class="toc-text">5.总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%9A%E7%95%8C%E6%A1%86%E6%9E%B6"><span class="toc-number">6.</span> <span class="toc-text">6.业界框架</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">7.</span> <span class="toc-text">参考资料</span></a></li></ol>
+                </div>
+            
+        
+        
+            <h2 id="固定窗口">1.固定窗口</h2>
+<p><strong>实现</strong><br>
+内部维护一个计数器，将单位时间段当做一个窗口，计数器记录这个窗口接收请求的次数。如果单位时间请求没有到达阈值，则计数器加1，正常请求；如果到达阈值，则访问拒绝；在开启下一个单位时间窗口时，计数器清0。</p>
+<p><strong>优点</strong><br>
+实现简单</p>
+<p><strong>缺点</strong></p>
+<ul>
+<li>无法解决临界问题。假设我们的限流时10次/秒，在0.8s-1s之前请求5次，在1s-1.2s请求五次，按照固定窗口限流算法，他们在单位时间都没有达到阈值，但是在0.8s-1.2s的时候其实已经达到了限流的阈值。</li>
+<li>无法应对突发流量</li>
+</ul>
+<h2 id="滑动窗口">2.滑动窗口</h2>
+<p><strong>实现</strong><br>
+相对于固定窗口，滑动窗口除了需要引入计数器之外还需要记录时间窗口内每个请求到达的时间点，因此对内存的占用会比较多。
+规则如下，假设时间窗口为 1 秒：</p>
+<ul>
+<li>记录每次请求的时间</li>
+<li>统计每次请求的时间 至 往前推1秒这个时间窗口内请求数，并且 1
+秒前的数据可以删除。</li>
+<li>统计的请求数小于阈值就记录这个请求的时间，并允许通过，反之拒绝。</li>
+</ul>
+<p><strong>优点</strong><br>
+实现简单，设置多条限流规则应对突发流量</p>
+<p><strong>缺点</strong><br>
+无法应对突发流量</p>
+<h2 id="漏斗算法">3.漏斗算法</h2>
+<p><strong>实现</strong><br>
+类似于mq，削峰填谷，处理速率恒定</p>
+<ul>
+<li>流入的水滴，可以看作是访问系统的请求，这个流入速率是不确定的。</li>
+<li>桶的容量一般表示系统所能处理的请求数。</li>
+<li>如果桶的容量满了，就达到限流的阀值，就会丢弃水滴（拒绝请求）</li>
+<li>流出的水滴，是恒定过滤的，对应服务按照固定的速率处理请求。</li>
+</ul>
+<p><strong>优点</strong><br>
+能很好的平滑流量</p>
+<p><strong>缺点</strong><br>
+处理速率恒定，不能最大化利用服务资源</p>
+<h2 id="令牌桶算法">4.令牌桶算法</h2>
+<p><strong>实现</strong></p>
+<ul>
+<li>有一个令牌管理员，根据限流大小，定速往令牌桶里放令牌。</li>
+<li>如果令牌数量满了，超过令牌桶容量的限制，那就丢弃。</li>
+<li>系统在接受到一个用户请求时，都会先去令牌桶要一个令牌。如果拿到令牌，那么就处理这个请求的业务逻辑；</li>
+<li>如果拿不到令牌，就直接拒绝这个请求。</li>
+</ul>
+<p><strong>优点</strong><br>
+可以看出令牌桶在应对突发流量的时候，桶内假如有 100 个令牌，那么这 100
+个令牌可以马上被取走，而不像漏桶那样匀速的消费。所以在应对突发流量的时候令牌桶表现的更佳。</p>
+<h2 id="总结">5.总结</h2>
+<ol type="1">
+<li>固定窗口算法实现简单，性能高，但是会有临界突发流量问题，瞬时流量最大可以达到阈值的2倍。</li>
+<li>为了解决临界突发流量，可以将窗口划分为多个更细粒度的单元，每次窗口向右移动一个单元，于是便有了滑动窗口算法。</li>
+<li>滑动窗口当流量到达阈值时会瞬间掐断流量，所以导致流量不够平滑。</li>
+<li>想要达到限流的目的，又不会掐断流量，使得流量更加平滑？可以考虑漏桶算法！需要注意的是，漏桶算法通常配置一个FIFO的队列使用以达到允许限流的作用。</li>
+<li>由于速率固定，即使在某个时刻下游处理能力过剩，也不能得到很好的利用，这是漏桶算法的一个短板。</li>
+<li>限流和瞬时流量其实并不矛盾，在大多数场景中，短时间突发流量系统是完全可以接受的。令牌桶算法就是不二之选了，令牌桶以固定的速率v产生令牌放入一个固定容量为n的桶中，当请求到达时尝试从桶中获取令牌。</li>
+<li>当桶满时，允许最大瞬时流量为n；当桶中没有剩余流量时则限流速率最低，为令牌生成的速率v。</li>
+<li>如何实现更加灵活的多级限流呢？滑动日志限流算法了解一下！这里的日志则是请求的时间戳，通过计算制定时间段内请求总数来实现灵活的限流。当然，由于需要存储时间戳信息，其占用的存储空间要比其他限流算法要大得多。</li>
+</ol>
+<h2 id="业界框架">6.业界框架</h2>
+<ul>
+<li>Google Guava RateLimiter</li>
+<li>Ali Sentinel</li>
+</ul>
+<h2 id="参考资料">参考资料</h2>
+<blockquote>
+<ul>
+<li><a target="_blank" rel="external nofollow noopener noreferrer" href="https://blog.csdn.net/billgates_wanbin/article/details/123556273">限流算法-常见的4种限流算法</a></li>
+</ul>
+</blockquote>
+
             </div>
-        </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
     
-        <div class="timeline-row">
-            <span class="node"></span>
-            <div class="content">
-                
+<nav id="article-nav">
     
-        <h1 itemprop="name">
-            <a class="timeline-article-title" href="/wiki/program/system%20design/system-design/">System Design</a>
-        </h1>
+    
+        <a href="/wiki/program/system%20design/system-design/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">System Design</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
     
 
-                
-            </div>
-        </div>
-    
-        <div class="timeline-row">
-            <span class="node"></span>
-            <div class="content">
-                
-    
-        <h1 itemprop="name">
-            <a class="timeline-article-title" href="/wiki/program/system%20design/OOD/">Object-Oriented Design</a>
-        </h1>
-    
 
-                
-            </div>
-        </div>
-    
-        <div class="timeline-row">
-            <span class="node"></span>
-            <div class="content">
-                
-    
-        <h1 itemprop="name">
-            <a class="timeline-article-title" href="/wiki/program/algorithm/two-pointer/">Two Pointer</a>
-        </h1>
-    
 
-                
-            </div>
-        </div>
-    
-        <div class="timeline-row">
-            <span class="node"></span>
-            <div class="content">
-                
-    
-        <h1 itemprop="name">
-            <a class="timeline-article-title" href="/wiki/program/java/core-java/">Core Java</a>
-        </h1>
-    
 
-                
-            </div>
-        </div>
-    
-        <div class="timeline-row">
-            <span class="node"></span>
-            <div class="content">
-                
-    
-        <h1 itemprop="name">
-            <a class="timeline-article-title" href="/wiki/plan/2022/m6/">m6</a>
-        </h1>
-    
-
-                
-            </div>
-        </div>
-    
-            <div class="timeline-row timeline-row-major">
-                <span class="node"><i class="fa fa-calendar"></i></span>
-                <h1 class="title"><a href="/archives/2022/05/">2022-05</a><span class="archive-list-count">4</span></h1>
-            </div>
-    
-        <div class="timeline-row">
-            <span class="node"></span>
-            <div class="content">
-                
-    
-        <h1 itemprop="name">
-            <a class="timeline-article-title" href="/wiki/plan/2022/m5/">m5</a>
-        </h1>
-    
-
-                
-            </div>
-        </div>
-    
-        <div class="timeline-row">
-            <span class="node"></span>
-            <div class="content">
-                
-    
-        <h1 itemprop="name">
-            <a class="timeline-article-title" href="/wiki/work/remote-job/">Remote Jobs</a>
-        </h1>
-    
-
-                
-            </div>
-        </div>
-    
-        <div class="timeline-row">
-            <span class="node"></span>
-            <div class="content">
-                
-    
-        <h1 itemprop="name">
-            <a class="timeline-article-title" href="/wiki/program/interview/history/202204/">202204</a>
-        </h1>
-    
-
-                
-            </div>
-        </div>
-    
-        <div class="timeline-row">
-            <span class="node"></span>
-            <div class="content">
-                
-    
-        <h1 itemprop="name">
-            <a class="timeline-article-title" href="/wiki/program/interview/history/202203/">202203</a>
-        </h1>
-    
-
-                
-            </div>
-        </div>
-    
-</div>
-
-    <nav id="page-nav">
-        <span class="page-number current">1</span><a class="page-number" href="/archives/page/2/">2</a><a class="page-number" href="/archives/page/3/">3</a><a class="extend next" rel="next" href="/archives/page/2/">Next &amp;raquo;</a>
-    </nav>
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
 </section>
         </div>
         <footer id="footer">

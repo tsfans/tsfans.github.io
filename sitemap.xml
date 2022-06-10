@@ -2,6 +2,24 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://tsfans.github.io/wiki/program/system%20design/rate-limit/</loc>
+    
+    <lastmod>2022-06-10</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tsfans.github.io/wiki/program/database/Redis/</loc>
+    
+    <lastmod>2022-06-10</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://tsfans.github.io/wiki/plan/2022/m6/</loc>
     
     <lastmod>2022-06-10</lastmod>
@@ -137,15 +155,6 @@
   </url>
   
   <url>
-    <loc>https://tsfans.github.io/wiki/program/database/Redis/</loc>
-    
-    <lastmod>2022-06-10</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://tsfans.github.io/wiki/program/database/MySQL/</loc>
     
     <lastmod>2022-06-10</lastmod>
@@ -256,6 +265,13 @@
 
   
   <url>
+    <loc>https://tsfans.github.io/categories/plan/</loc>
+    <lastmod>2022-06-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>https://tsfans.github.io/categories/work/</loc>
     <lastmod>2022-06-10</lastmod>
     <changefreq>weekly</changefreq>
@@ -270,14 +286,7 @@
   </url>
   
   <url>
-    <loc>https://tsfans.github.io/categories/program/algorithm/</loc>
-    <lastmod>2022-06-10</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://tsfans.github.io/categories/plan/</loc>
+    <loc>https://tsfans.github.io/categories/plan/2022/</loc>
     <lastmod>2022-06-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -285,6 +294,13 @@
   
   <url>
     <loc>https://tsfans.github.io/categories/program/database/</loc>
+    <lastmod>2022-06-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://tsfans.github.io/categories/program/algorithm/</loc>
     <lastmod>2022-06-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -319,13 +335,6 @@
   </url>
   
   <url>
-    <loc>https://tsfans.github.io/categories/program/operation-system/</loc>
-    <lastmod>2022-06-10</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://tsfans.github.io/categories/program/system-design/</loc>
     <lastmod>2022-06-10</lastmod>
     <changefreq>weekly</changefreq>
@@ -333,14 +342,14 @@
   </url>
   
   <url>
-    <loc>https://tsfans.github.io/categories/plan/2022/</loc>
+    <loc>https://tsfans.github.io/categories/program/interview/</loc>
     <lastmod>2022-06-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://tsfans.github.io/categories/program/interview/</loc>
+    <loc>https://tsfans.github.io/categories/program/operation-system/</loc>
     <lastmod>2022-06-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>

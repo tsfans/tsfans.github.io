@@ -182,7 +182,7 @@
         </div>
         <div class="article-info profile-block">
             <div class="article-info-block">
-                24
+                25
                 <span>posts</span>
             </div>
             <div class="article-info-block">
@@ -338,7 +338,7 @@
                             &nbsp;
                             system design
                         </a>
-                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/system%20design/DDIA/">Design Data-Intensive Application</a></li>  <li class="file"><a href="/wiki/program/system%20design/OOD/">Object-Oriented Design</a></li>  <li class="file"><a href="/wiki/program/system%20design/system-design/">System Design</a></li>  </ul> 
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/wiki/program/system%20design/DDIA/">Design Data-Intensive Application</a></li>  <li class="file"><a href="/wiki/program/system%20design/OOD/">Object-Oriented Design</a></li>  <li class="file"><a href="/wiki/program/system%20design/system-design/">System Design</a></li>  <li class="file"><a href="/wiki/program/system%20design/rate-limit/">Rate Limiter</a></li>  </ul> 
                     </li> 
                      </ul> 
                     </li> 
@@ -423,6 +423,105 @@
 </aside>
             
             <section id="main">
+        <article id="post-program/system design/rate-limit" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/program/">program</a><i class="fa fa-angle-right"></i><a class="article-category-link" href="/categories/program/system-design/">system design</a>
+    </div>
+
+                        
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/wiki/program/system%20design/rate-limit/">
+            <time datetime="2022-06-10T08:27:41.000Z" itemprop="datePublished">2022-06-10</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                            <div class="article-meta-button">
+                                <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/tsfans/tsfans.github.io/raw/main/source/_posts/program/system design/rate-limit.md"> Source </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/tsfans/tsfans.github.io/edit/main/source/_posts/program/system design/rate-limit.md"> Edit </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/tsfans/tsfans.github.io/commits/main/source/_posts/program/system design/rate-limit.md"> History </a>
+                            </div>
+                        
+                    </div>
+                
+                
+    
+        <h1 itemprop="name">
+            <a class="article-title" href="/wiki/program/system%20design/rate-limit/">Rate Limiter</a>
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+                
+                
+                    
+                    
+                
+                    
+                    
+                
+                    
+                    
+                
+                    
+                    
+                
+                    
+                    
+                
+                
+                    
+                    <p></p><h2 id="固定窗口">1.固定窗口</h2>
+<p><strong>实现</strong><br>
+内部维护一个计数器，将单位时间段当做一个窗口，计数器记录这个窗口接收请求的次数。如果单位时间请求没有到达阈值，则计数器加1，正常请求；如果到达阈值，则访问拒绝；在开启下一个单位时间窗口时，计数器清0。</p>
+<p><strong>优点</strong><br>
+实现简单</p>
+<p>
+                
+            
+        
+        
+            </p></div>   
+            <div class="article-more-link">
+                <a href="/wiki/program/system%20design/rate-limit/#more">Read More</a>
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+
+
+
+
+    
         <article id="post-program/system design/system-design" class="article article-type-post" itemscope itemprop="blogPost">
     <div class="article-inner">
         
@@ -1294,105 +1393,6 @@
             </p></ul></li></ul></div>   
             <div class="article-more-link">
                 <a href="/wiki/program/interview/history/202203/#more">Read More</a>
-            </div>
-        
-        <footer class="article-footer">
-        </footer>
-    </div>
-</article>
-
-
-
-
-
-
-    
-        <article id="post-program/system design/DDIA" class="article article-type-post" itemscope itemprop="blogPost">
-    <div class="article-inner">
-        
-        
-            <header class="article-header">
-                
-                    <div class="article-meta">
-                        
-    <div class="article-category">
-    	<i class="fa fa-folder"></i>
-        <a class="article-category-link" href="/categories/program/">program</a><i class="fa fa-angle-right"></i><a class="article-category-link" href="/categories/program/system-design/">system design</a>
-    </div>
-
-                        
-                        
-    <div class="article-date">
-        <i class="fa fa-calendar"></i>
-        <a href="/wiki/program/system%20design/DDIA/">
-            <time datetime="2022-05-13T01:14:04.000Z" itemprop="datePublished">2022-05-13</time>
-        </a>
-    </div>
-
-
-                        
-                            <i class="fa fa-bar-chart"></i>
-                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
-                        
-                        
-                            <div class="article-meta-button">
-                                <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/tsfans/tsfans.github.io/raw/main/source/_posts/program/system design/DDIA.md"> Source </a>
-                            </div>
-                            <div class="article-meta-button">
-                                <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/tsfans/tsfans.github.io/edit/main/source/_posts/program/system design/DDIA.md"> Edit </a>
-                            </div>
-                            <div class="article-meta-button">
-                                <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/tsfans/tsfans.github.io/commits/main/source/_posts/program/system design/DDIA.md"> History </a>
-                            </div>
-                        
-                    </div>
-                
-                
-    
-        <h1 itemprop="name">
-            <a class="article-title" href="/wiki/program/system%20design/DDIA/">Design Data-Intensive Application</a>
-        </h1>
-    
-
-            </header>
-        
-        
-        <div class="article-entry" itemprop="articleBody">
-        
-        
-            
-                
-                
-                    
-                    
-                
-                    
-                    
-                
-                    
-                    
-                
-                    
-                    
-                
-                    
-                    
-                
-                
-                    
-                    <p></p><h2 id="chapter-1-可靠可扩展与可维护的应用系统">Chapter 1
-可靠、可扩展与可维护的应用系统</h2>
-<ul>
-<li>Reliable</li>
-<li>Scalable</li>
-<p>
-                
-            
-        
-        
-            </p></ul></div>   
-            <div class="article-more-link">
-                <a href="/wiki/program/system%20design/DDIA/#more">Read More</a>
             </div>
         
         <footer class="article-footer">
