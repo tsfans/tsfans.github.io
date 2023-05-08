@@ -2,7 +2,8 @@
 title: eclipse application
 toc: true
 date: 2022-05-13 08:45:58
-tags:
+tags: eclipse
+categories: ide
 ---
 
 ## 1.项目结构

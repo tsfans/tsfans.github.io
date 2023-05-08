@@ -2,7 +2,8 @@
 title: Two Pointer
 toc: true
 date: 2022-06-09 14:48:08
-tags:
+tags: two-pointer
+categories: algorithm
 ---
 
 ## 左右指针

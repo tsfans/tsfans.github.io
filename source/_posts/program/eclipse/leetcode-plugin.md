@@ -2,7 +2,8 @@
 title: leetcode plugin for eclipse
 toc: true
 date: 2022-05-13 08:45:58
-tags:
+tags: plugin
+categories: ide
 ---
 
 ## 功能点

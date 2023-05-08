@@ -2,7 +2,8 @@
 title: Linux
 toc: true
 date: 2022-05-13 09:09:45
-tags:
+tags: linux
+categories: os
 ---
 
 ## 常见问题

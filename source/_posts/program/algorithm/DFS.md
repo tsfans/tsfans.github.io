@@ -2,7 +2,8 @@
 title: Depth First Search
 toc: true
 date: 2022-05-13 09:02:38
-tags:
+tags: DFS
+categories: algorithm
 ---
 
 - 解题框架

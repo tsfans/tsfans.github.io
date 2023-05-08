@@ -2,7 +2,8 @@
 title: Dynamic Planning
 toc: true
 date: 2022-05-13 09:03:38
-tags:
+tags: DP
+categories: algorithm
 ---
 
 - 解题框架

@@ -2,7 +2,8 @@
 title: Core Java
 toc: true
 date: 2022-06-09 14:15:36
-tags:
+tags: core-java
+categories: java
 ---
 
 # Collections

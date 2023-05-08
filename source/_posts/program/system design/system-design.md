@@ -2,7 +2,8 @@
 title: System Design
 toc: true
 date: 2022-06-09 15:14:08
-tags:
+tags: summary
+categories: system-design
 ---
 
 ## 设计流程

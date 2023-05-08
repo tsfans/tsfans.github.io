@@ -2,7 +2,8 @@
 title: Rate Limiter
 toc: true
 date: 2022-06-10 16:27:41
-tags:
+tags: rate-limiter
+categories: system-design
 ---
 
 ## 1.固定窗口

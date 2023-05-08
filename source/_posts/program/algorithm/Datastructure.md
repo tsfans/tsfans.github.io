@@ -2,7 +2,8 @@
 title: Datastructure
 toc: true
 date: 2022-05-13 08:59:23
-tags:
+tags: datastructure
+categories: datastructure
 ---
 
 ## 数据结构

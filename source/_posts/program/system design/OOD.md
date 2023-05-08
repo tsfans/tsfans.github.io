@@ -2,7 +2,8 @@
 title: Object-Oriented Design
 toc: true
 date: 2022-06-09 15:07:31
-tags:
+tags: ood
+categories: system-design
 ---
 
 ## SOLID原则

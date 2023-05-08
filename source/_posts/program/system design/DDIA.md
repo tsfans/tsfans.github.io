@@ -2,7 +2,8 @@
 title: Design Data-Intensive Application
 toc: true
 date: 2022-05-13 09:14:04
-tags:
+tags: ddia
+categories: system-design
 ---
 
 ## Chapter 1 可靠、可扩展与可维护的应用系统
