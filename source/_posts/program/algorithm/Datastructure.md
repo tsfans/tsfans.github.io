@@ -10,6 +10,11 @@ categories: datastructure
 
 ### 数组
 
+- 前缀数组
+- 差分数组
+- 二分查找
+- 双指针
+
 ### 链表
 
 ### 栈
@@ -70,7 +75,7 @@ void postOrder(TreeNode root) {
   - 邻接矩阵 `boolean[][] matrix = new boolean[from][to]`
 - 度
   - 无向图: 每个节点相连的边的条数
-  - 有向图: 入度(指向当前节点) 和 出度(从当前节点执行别的节点)
+  - 有向图: 入度(指向当前节点) 和 出度(从当前节点指向别的节点)
 - 加权: 每条边有一定的权重
 - 有向图环检测
   - DFS记录遍历path
