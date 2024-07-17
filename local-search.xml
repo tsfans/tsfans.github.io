@@ -1,0 +1,545 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  
+  
+  
+  <entry>
+    <title>Rate Limiter</title>
+    <link href="/2022/06/10/program/system%20design/rate-limit/"/>
+    <url>/2022/06/10/program/system%20design/rate-limit/</url>
+    
+    <content type="html"><![CDATA[<h2 id="1-固定窗口"><a href="#1-固定窗口" class="headerlink" title="1.固定窗口"></a>1.固定窗口</h2><p><strong>实现</strong><br>内部维护一个计数器，将单位时间段当做一个窗口，计数器记录这个窗口接收请求的次数。如果单位时间请求没有到达阈值，则计数器加1，正常请求；如果到达阈值，则访问拒绝；在开启下一个单位时间窗口时，计数器清0。</p><p><strong>优点</strong><br>实现简单</p><p><strong>缺点</strong>  </p><ul><li>无法解决临界问题。假设我们的限流时10次&#x2F;秒，在0.8s-1s之前请求5次，在1s-1.2s请求五次，按照固定窗口限流算法，他们在单位时间都没有达到阈值，但是在0.8s-1.2s的时候其实已经达到了限流的阈值。</li><li>无法应对突发流量</li></ul><h2 id="2-滑动窗口"><a href="#2-滑动窗口" class="headerlink" title="2.滑动窗口"></a>2.滑动窗口</h2><p><strong>实现</strong><br>相对于固定窗口，滑动窗口除了需要引入计数器之外还需要记录时间窗口内每个请求到达的时间点，因此对内存的占用会比较多。<br>规则如下，假设时间窗口为 1 秒：</p><ul><li>记录每次请求的时间</li><li>统计每次请求的时间 至 往前推1秒这个时间窗口内请求数，并且 1 秒前的数据可以删除。</li><li>统计的请求数小于阈值就记录这个请求的时间，并允许通过，反之拒绝。</li></ul><p><strong>优点</strong><br>实现简单，设置多条限流规则应对突发流量</p><p><strong>缺点</strong><br>无法应对突发流量</p><h2 id="3-漏斗算法"><a href="#3-漏斗算法" class="headerlink" title="3.漏斗算法"></a>3.漏斗算法</h2><p><strong>实现</strong><br>类似于mq，削峰填谷，处理速率恒定</p><ul><li>流入的水滴，可以看作是访问系统的请求，这个流入速率是不确定的。</li><li>桶的容量一般表示系统所能处理的请求数。</li><li>如果桶的容量满了，就达到限流的阀值，就会丢弃水滴（拒绝请求）</li><li>流出的水滴，是恒定过滤的，对应服务按照固定的速率处理请求。</li></ul><p><strong>优点</strong><br>能很好的平滑流量</p><p><strong>缺点</strong><br>处理速率恒定，不能最大化利用服务资源</p><h2 id="4-令牌桶算法"><a href="#4-令牌桶算法" class="headerlink" title="4.令牌桶算法"></a>4.令牌桶算法</h2><p><strong>实现</strong>  </p><ul><li>有一个令牌管理员，根据限流大小，定速往令牌桶里放令牌。</li><li>如果令牌数量满了，超过令牌桶容量的限制，那就丢弃。</li><li>系统在接受到一个用户请求时，都会先去令牌桶要一个令牌。如果拿到令牌，那么就处理这个请求的业务逻辑；</li><li>如果拿不到令牌，就直接拒绝这个请求。</li></ul><p><strong>优点</strong><br>可以看出令牌桶在应对突发流量的时候，桶内假如有 100 个令牌，那么这 100 个令牌可以马上被取走，而不像漏桶那样匀速的消费。所以在应对突发流量的时候令牌桶表现的更佳。</p><h2 id="5-总结"><a href="#5-总结" class="headerlink" title="5.总结"></a>5.总结</h2><ol><li>固定窗口算法实现简单，性能高，但是会有临界突发流量问题，瞬时流量最大可以达到阈值的2倍。</li><li>为了解决临界突发流量，可以将窗口划分为多个更细粒度的单元，每次窗口向右移动一个单元，于是便有了滑动窗口算法。</li><li>滑动窗口当流量到达阈值时会瞬间掐断流量，所以导致流量不够平滑。</li><li>想要达到限流的目的，又不会掐断流量，使得流量更加平滑？可以考虑漏桶算法！需要注意的是，漏桶算法通常配置一个FIFO的队列使用以达到允许限流的作用。</li><li>由于速率固定，即使在某个时刻下游处理能力过剩，也不能得到很好的利用，这是漏桶算法的一个短板。</li><li>限流和瞬时流量其实并不矛盾，在大多数场景中，短时间突发流量系统是完全可以接受的。令牌桶算法就是不二之选了，令牌桶以固定的速率v产生令牌放入一个固定容量为n的桶中，当请求到达时尝试从桶中获取令牌。</li><li>当桶满时，允许最大瞬时流量为n；当桶中没有剩余流量时则限流速率最低，为令牌生成的速率v。</li><li>如何实现更加灵活的多级限流呢？滑动日志限流算法了解一下！这里的日志则是请求的时间戳，通过计算制定时间段内请求总数来实现灵活的限流。当然，由于需要存储时间戳信息，其占用的存储空间要比其他限流算法要大得多。</li></ol><h2 id="6-业界框架"><a href="#6-业界框架" class="headerlink" title="6.业界框架"></a>6.业界框架</h2><ul><li>Google Guava RateLimiter</li><li>Ali Sentinel</li></ul><h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote><ul><li><a href="https://blog.csdn.net/billgates_wanbin/article/details/123556273">限流算法-常见的4种限流算法</a></li></ul></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>system-design</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>rate-limiter</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>System Design</title>
+    <link href="/2022/06/09/program/system%20design/system-design/"/>
+    <url>/2022/06/09/program/system%20design/system-design/</url>
+    
+    <content type="html"><![CDATA[<h2 id="设计流程"><a href="#设计流程" class="headerlink" title="设计流程"></a>设计流程</h2><h3 id="1-需求澄清"><a href="#1-需求澄清" class="headerlink" title="1.需求澄清"></a>1.需求澄清</h3><ul><li>1.1 功能性需求<ul><li>use case<ul><li>提炼实体对象</li><li>划分业务模块</li></ul></li></ul></li><li>1.2 非功能性需求<ul><li>高性能</li><li>高可扩展性</li><li>高可靠</li><li>高可维护性</li></ul></li></ul><h3 id="2-架构设计"><a href="#2-架构设计" class="headerlink" title="2.架构设计"></a>2.架构设计</h3><ul><li>data model</li><li>api</li><li>架构图diagram</li></ul><h3 id="3-深入重点"><a href="#3-深入重点" class="headerlink" title="3.深入重点"></a>3.深入重点</h3><ul><li>选择关键模块进行阐述</li><li>与面试官确认关注的重点</li></ul><h3 id="4-找到系统瓶颈"><a href="#4-找到系统瓶颈" class="headerlink" title="4.找到系统瓶颈"></a>4.找到系统瓶颈</h3><ul><li>一般是针对非功能性需求进行阐述,选择最重要的一点进行阐述</li><li>阐述系统可扩展性,如何支撑未来的用户增长</li></ul><h3 id="5-总结阐述"><a href="#5-总结阐述" class="headerlink" title="5.总结阐述"></a>5.总结阐述</h3><ul><li>阐述做出当前设计的考量</li><li>是否还有其他可选的设计</li></ul><h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><ul><li>设计一个海量的评论系统</li><li>设计一个短链接生成系统？数据如何存储？高并发如何处理？</li><li>设计一个秒杀系统</li><li>设计一个微信朋友圈系统，列出主要的表结构，只需要实现一些基础的功能，比如聊天列表等</li><li>设计一个海量日志写入系统(可参考 cat)</li><li>设计一个酒店预订系统</li></ul><h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul><li>1.DDIA:强烈推荐读一读尤其是一些重点章节可以考虑多读几遍楼主读了两遍很多东西依然没有完全理解</li><li>2.YoutubeScottShi视频</li><li>3.AlexXuSystemDesignInterviewbook:最大的收获是过了一边各种题型和学到了一些基本技巧</li><li>4.Techblog:对不同的系统可以搜一搜对应的techlog往往可以得到很多启发而且经过production考验的设计往往比自己空想出来的设计更加solid</li><li>5.Paper:我对paper的建议是如果不是面infra职位其实看infra相关的paper未必是性价比最高的如果面infra时间允许以及自己也很有兴趣想深入学习一下仔细研读一下paper收获挺大的一些infra相关的比较不错的paper：MapreduceBigtableGooglefilesystemFacebookmemcacheFacebookTAOGoogleSpannerKafkaZookeeperAmazondynamoAmazonAurora</li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>system-design</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>summary</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Object-Oriented Design</title>
+    <link href="/2022/06/09/program/system%20design/OOD/"/>
+    <url>/2022/06/09/program/system%20design/OOD/</url>
+    
+    <content type="html"><![CDATA[<h2 id="SOLID原则"><a href="#SOLID原则" class="headerlink" title="SOLID原则"></a>SOLID原则</h2><ul><li>SRP单一职责</li><li>OCP开闭原则</li><li>LSP里氏代换原则</li><li>ISP接口隔离原则</li><li>DRP依赖反转原则</li></ul><h2 id="其他原则"><a href="#其他原则" class="headerlink" title="其他原则"></a>其他原则</h2><ul><li>C&#x2F;ARP组合复用原则</li><li>LOD迪米特法则</li><li>CCP共同封闭原则</li><li>SAP稳定抽象原则</li><li>SDP稳定依赖原则</li></ul><h2 id="设计模式"><a href="#设计模式" class="headerlink" title="设计模式"></a>设计模式</h2><h3 id="UML"><a href="#UML" class="headerlink" title="UML"></a>UML</h3><ul><li>泛化&#x2F;继承</li><li>实现</li><li>关联</li><li>依赖</li><li>聚合</li><li>组合</li></ul><h2 id="分布式"><a href="#分布式" class="headerlink" title="分布式"></a>分布式</h2><ul><li>CAP</li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>system-design</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>ood</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Two Pointer</title>
+    <link href="/2022/06/09/program/algorithm/two-pointer/"/>
+    <url>/2022/06/09/program/algorithm/two-pointer/</url>
+    
+    <content type="html"><![CDATA[<h2 id="左右指针"><a href="#左右指针" class="headerlink" title="左右指针"></a>左右指针</h2><h2 id="快慢指针"><a href="#快慢指针" class="headerlink" title="快慢指针"></a>快慢指针</h2><h2 id="滑动窗口"><a href="#滑动窗口" class="headerlink" title="滑动窗口"></a>滑动窗口</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">slidingWindow</span><span class="hljs-params">(String s, String t)</span>&#123;<br>    Map&lt;Character, Integer&gt; window = <span class="hljs-keyword">new</span> <span class="hljs-title class_">HashMap</span>&lt;&gt;();<br>    Map&lt;Character, Integer&gt; target = <span class="hljs-keyword">new</span> <span class="hljs-title class_">HashMap</span>&lt;&gt;();<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">char</span> c : t.toCharArray())&#123;<br>        target.put(c, target.getOrDefault(c, <span class="hljs-number">0</span>) + <span class="hljs-number">1</span>);<br>    &#125;<br>    <span class="hljs-type">int</span> <span class="hljs-variable">left</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>, right = <span class="hljs-number">0</span>, match = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">while</span>(right &lt; s.length())&#123;<br>        <span class="hljs-type">char</span> <span class="hljs-variable">ac</span> <span class="hljs-operator">=</span> s.charAt(right);<br>        right++;<br>        <span class="hljs-comment">// update window</span><br><br>        <span class="hljs-comment">// shrink condition</span><br>        <span class="hljs-keyword">while</span>(match == target.size())&#123;<br>            <span class="hljs-comment">// update result</span><br>            <span class="hljs-type">char</span> <span class="hljs-variable">rc</span> <span class="hljs-operator">=</span> s.charAt(left);<br>            left++;<br>            <span class="hljs-comment">// update window</span><br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure><h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2>]]></content>
+    
+    
+    <categories>
+      
+      <category>algorithm</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>two-pointer</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Core Java</title>
+    <link href="/2022/06/09/program/java/core-java/"/>
+    <url>/2022/06/09/program/java/core-java/</url>
+    
+    <content type="html"><![CDATA[<h1 id="Collections"><a href="#Collections" class="headerlink" title="Collections"></a>Collections</h1><h2 id="HashMap"><a href="#HashMap" class="headerlink" title="HashMap"></a>HashMap</h2><ul><li>整体设计?是否线程安全?为什么?<ul><li>数组+链表+红黑树,hash 冲突时用链表,&gt;8 树化,&lt;6 链表化</li><li>线程不安全,未加锁</li></ul></li><li>hash 怎么计算的?为什么这么做?<ul><li>高 16bit 不变，低 16bit 和高 16bit 做了一个异或</li><li>数组索引计算 i &#x3D; (table.length - 1) &amp; hash</li></ul></li><li>怎么扩容的?为什么使用 2 次幂扩展?<ul><li>bucket 扩充为 2 倍，之后重新计算 index.因为我们使用的是 2 次幂的扩展(指长度扩为原来 2 倍)，所以，元素的位置要么是在原位置，要么是在原位置再移动 2 次幂的位置</li></ul></li><li>并发问题?死循环<ul><li>在 HashMap 并发进行 Resize 的过程中会出现环形链表，导致 get() 操作死循环。</li></ul></li></ul><h2 id="ConcurrentHashMap"><a href="#ConcurrentHashMap" class="headerlink" title="ConcurrentHashMap"></a>ConcurrentHashMap</h2><ul><li>整体设计?是否线程安全?为什么?跟 HashTable 的差异<ul><li>table 数组＋单向链表＋红黑树,读不加锁,写加锁,锁粒度细到数组元素级</li><li>HashTable 只是简单加 synchronized,性能较差</li></ul></li><li>怎么保证性能<ul><li>读不加锁,用 volatile 保证可见性</li><li>写加锁,用 table 数组元素作为锁,实现了对每一行数据进行加锁，进一步减少并发冲突的概率</li></ul></li></ul><h2 id="BlockingQueue"><a href="#BlockingQueue" class="headerlink" title="BlockingQueue"></a>BlockingQueue</h2><ul><li>功能特性?<ul><li>在任意时刻，当有界 BlockingQueue 队列元素放满之后，所有的元素都将在放入的时候阻塞。无界 BlockingQueue 没有任何容量限制，容量大小始终是 Integer.MAX_VALUE</li><li>主要用于 生产者-消费者 的队列</li></ul></li><li>整体设计?<ul><li>ArrayBlockingQueue: 底层由数组存储的有界队列。遵循 FIFO，所以在队首的元素是在队列中等待时间最长的，而在队尾的则是最短时间的元素。新元素被插入到队尾，队列的取出 操作队首元素</li></ul></li></ul><h1 id="Concurrent"><a href="#Concurrent" class="headerlink" title="Concurrent"></a>Concurrent</h1><h2 id="Thread"><a href="#Thread" class="headerlink" title="Thread"></a>Thread</h2><ul><li>线程（Thread）是操作系统能够进行运算调度的最小单位。它被包含在进程之中，是进程中的实际运作单位。一条线程指的是进程中一个单一顺序的控制流，一个进程中可以并发多个线程，每条线程并行执行不同的任务</li><li>线程状态:<ul><li>新建（New）: 新建的Thread，尚未开始。</li><li>运行（Runable）: 包含操作系统线程状态中的Running、Ready，也就是处于正在执行或正在等待CPU分配时间的状态。</li><li>无限期等待（Waiting）: 处于这种状态的线程不会被分配CPU时间，等待其他线程唤醒。</li><li>限期等待（Timed Waiting）: 处于这种状态的线程不会被分配CPU时间，在一定时间后会由系统自动唤醒。</li><li>阻塞（Blocked）: 在等待获得排他锁。</li><li>结束（Terminated）: 已终止的线程。</li></ul></li><li>java 线程池的核心参数，以及运行原理，如何确定线程池线程数大小，为什么</li><li>ThreadPoolExecutor 构造函数重要参数：<ul><li>corePoolSize : 核心线程数线程数定义了最小可以同时运行的线程数量。</li><li>maximumPoolSize : 当队列中存放的任务达到队列容量的时候，当前可以同时运行的线程数量变为最大线程数。</li><li>workQueue: 当新任务来的时候会先判断当前运行的线程数量是否达到核心线程数，如果达到的话，新任务就会被存放在队列中。</li><li>keepAliveTime：当线程池中的线程数量大于 corePoolSize 的时候，如果这时没有新的任务提交，核心线程外的线程不会立即销毁，而是会等待，直到等待的时间超过了 keepAliveTime 才会被回收销毁；</li><li>unit ：keepAliveTime 参数的时间单位。</li><li>threadFactory ：executor 创建新线程的时候会用到。</li><li>handler ：饱和策略。</li></ul></li></ul><h2 id="volatile"><a href="#volatile" class="headerlink" title="volatile"></a>volatile</h2><ul><li>作用是什么?怎么实现的?<ul><li>1)保证可见性;2)禁止重排序<ul><li>当程序执行到 volatile 变量的读操作或者写操作时，在其前面的操作的更改肯定全部已经进行，且结果已经对后面的操作可见，在其后面的操作肯定还没有进行；</li><li>在进行指令优化时，不能将在对 volatile 变量访问的语句放在其后面执行，也不能把 volatile 变量后面的语句放到其前面执行。</li></ul></li><li>计算机内存模型:cpu(寄存器)-&gt;三级缓存-&gt;主存</li><li>为了解决缓存不一致性问题，通常来说有以下两种解决方法：1)通过在总线加 LOCK#锁的方式(效率低,早期采用);2)通过缓存一致性协议(MESI 协议)当 CPU 写数据时，如果发现操作的变量是共享变量，即在其他 CPU 中也存在该变量的副本，会发出信号通知其他 CPU 将该变量的缓存行置为无效状态，因此当其他 CPU 需要读取这个变量时，发现自己缓存中缓存该变量的缓存行是无效的，那么它就会从内存重新读取。</li><li>无法保证原子性.在 Java 1.5 的 java.util.concurrent.atomic 包下提供了一些原子操作类，即对基本数据类型的 自增（加 1 操作），自减（减 1 操作）、以及加法操作（加一个数），减法操作（减一个数）进行了封装，保证这些操作是原子性操作。atomic 是利用 CAS 来实现原子性操作的（Compare And Swap），CAS 实际上是利用处理器提供的 CMPXCHG 指令实现的，而处理器执行 CMPXCHG 指令是一个原子性操作。</li><li>实现机制:内存屏障<ul><li>观察加入 volatile 关键字和没有加入 volatile 关键字时所生成的汇编代码发现，加入 volatile 关键字时，会多出一个 lock 前缀指令</li><li>lock 前缀指令实际上相当于一个 内存屏障（也称内存栅栏），内存屏障会提供 3 个功能：<ul><li>它确保指令重排序时不会把其后面的指令排到内存屏障之前的位置，也不会把前面的指令排到内存屏障的后面；即在执行到内存屏障这句指令时，在它前面的操作已经全部完成；</li><li>它会强制将对缓存的修改操作立即写入主存；</li><li>如果是写操作，它会导致其他 CPU 中对应的缓存行无效。</li></ul></li></ul></li></ul></li></ul><h2 id="synchronized"><a href="#synchronized" class="headerlink" title="synchronized"></a>synchronized</h2><h3 id="1-6前为重量级锁"><a href="#1-6前为重量级锁" class="headerlink" title="1.6前为重量级锁"></a>1.6前为重量级锁</h3><h3 id="1-6后进行优化"><a href="#1-6后进行优化" class="headerlink" title="1.6后进行优化"></a>1.6后进行优化</h3><ul><li><p>偏向锁</p><ul><li>优点: 加锁、解锁无额外消耗，和非同步方式近似</li><li>缺点: 如果竞争线程多，会有额外锁撤销的消耗</li><li>适用场景: 基本没有线程竞争的场景</li></ul></li><li><p>轻量级锁</p><ul><li>优点: 竞争线程不会阻塞，使用自旋等待</li><li>缺点: 如果长时间不能获取锁，会消耗CPU</li><li>适用场景: 少量线程竞争，且线程持有锁时间不长</li></ul></li><li><p>重量级锁</p><ul><li>优点: 竞争线程被阻塞，减少CPU空转</li><li>缺点: 线程阻塞，响应时间长</li><li>适用场景: 很多线程竞争，锁持有时间长</li></ul></li><li><p>jvm优化</p><ul><li>锁消除: 经过逃逸分析，去除不可能存在共享资源竞争的锁</li><li>锁粗化:  JVM 将多个连续的加锁、解锁操作连接在一起，扩展成一个范围更大的锁，避免频繁的加锁解锁操作。</li></ul></li></ul><h2 id="Lock"><a href="#Lock" class="headerlink" title="Lock"></a>Lock</h2><h3 id="ReentrantLock-作用是什么-怎么实现的"><a href="#ReentrantLock-作用是什么-怎么实现的" class="headerlink" title="ReentrantLock 作用是什么?怎么实现的?"></a>ReentrantLock 作用是什么?怎么实现的?</h3><h4 id="Synchronized-vs-ReentrantLock"><a href="#Synchronized-vs-ReentrantLock" class="headerlink" title="Synchronized vs ReentrantLock"></a>Synchronized vs ReentrantLock</h4><ul><li><p>synchronized 是 Java 关键字，ReentrantLock 基于 AQS 的 API 层面的互斥锁</p></li><li><p>ReentrantLock可以设置等待超时时间</p></li><li><p>ReentrantLock可进行公平锁与非公平锁设置</p></li><li><p>ReentrantLock可绑定多个 Condition</p></li><li><p>synchronized 不需要手动释放锁</p></li><li><p>synchronized 可以修饰方法、代码块</p></li><li><p>悲观锁，乐观锁，优缺点，CAS 有什么缺陷，该如何解决</p></li></ul><h2 id="Java-内存模型-JMM"><a href="#Java-内存模型-JMM" class="headerlink" title="Java 内存模型(JMM)"></a>Java 内存模型(JMM)</h2><ul><li>注意，为了获得较好的执行性能，Java 内存模型并没有限制执行引擎使用处理器的寄存器或者高速缓存来提升指令执行速度，也没有限制编译器对指令进行重排序。也就是说，在 java 内存模型中，也会存在缓存一致性问题和指令重排序的问题。</li><li>Java 内存模型规定所有的变量都是存在主存当中（类似于前面说的物理内存），每个线程都有自己的工作内存（类似于前面的高速缓存）。线程对变量的所有操作都必须在工作内存中进行，而不能直接对主存进行操作。并且每个线程不能访问其他线程的工作内存。</li><li>原子性:即一个操作或者多个操作 要么全部执行并且执行的过程不会被任何因素打断，要么就都不执行。<ul><li>只有简单的读取、赋值（而且必须是将数字赋值给某个变量，变量之间的相互赋值不是原子操作）才是原子操作</li><li>在 32 位平台下，对 64 位数据的读取和赋值是需要通过两个操作来完成的，不能保证其原子性。但是好像在最新的 JDK 中，JVM 已经保证对 64 位数据的读取和赋值也是原子性操作了。</li><li>如果要实现更大范围操作的原子性，可以通过 synchronized 和 Lock 来实现。由于 synchronized 和 Lock 能够保证任一时刻只有一个线程执行该代码块，那么自然就不存在原子性问题了，从而保证了原子性。</li></ul></li><li>可见性:可见性是指当多个线程访问同一个变量时，一个线程修改了这个变量的值，其他线程能够立即看得到修改的值。<ul><li>当一个共享变量被 volatile 修饰时，它会保证修改的值会立即被更新到主存，当有其他线程需要读取时，它会去内存中读取新值</li><li>synchronized 和 Lock 能保证同一时刻只有一个线程获取锁然后执行同步代码，并且在释放锁之前会将对变量的修改刷新到主存当中。因此可以保证可见性。</li></ul></li><li>有序性:即程序执行的顺序按照代码的先后顺序执行。<ul><li>指令重排序，一般来说，处理器为了提高程序运行效率，可能会对输入代码进行优化，它不保证程序中各个语句的执行先后顺序同代码中的顺序一致，但是它会保证程序最终执行结果和代码顺序执行的结果是一致的。</li><li>处理器在进行重排序时是会考虑指令之间的数据依赖性，如果一个指令 Instruction 2 必须用到 Instruction 1 的结果，那么处理器会保证 Instruction 1 会在 Instruction 2 之前执行。</li></ul></li><li>happens-before 原则（先行发生原则）<ul><li>程序次序规则：一个线程内，按照代码顺序，书写在前面的操作先行发生于书写在后面的操作</li><li>锁定规则：一个 unLock 操作先行发生于后面对同一个锁额 lock 操作</li><li>volatile 变量规则：对一个变量的写操作先行发生于后面对这个变量的读操作</li><li>传递规则：如果操作 A 先行发生于操作 B，而操作 B 又先行发生于操作 C，则可以得出操作 A 先行发生于操作 C</li><li>线程启动规则：Thread 对象的 start()方法先行发生于此线程的每个一个动作</li><li>线程中断规则：对线程 interrupt()方法的调用先行发生于被中断线程的代码检测到中断事件的发生</li><li>线程终结规则：线程中所有的操作都先行发生于线程的终止检测，我们可以通过 Thread.join()方法结束、Thread.isAlive()的返回值手段检测到线程已经终止执行</li><li>对象终结规则：一个对象的初始化完成先行发生于他的 finalize()方法的开始</li></ul></li></ul><h2 id="ThreadLocal"><a href="#ThreadLocal" class="headerlink" title="ThreadLocal"></a>ThreadLocal</h2><h2 id="AQS"><a href="#AQS" class="headerlink" title="AQS"></a>AQS</h2><h1 id="JVM"><a href="#JVM" class="headerlink" title="JVM"></a>JVM</h1><h2 id="运行时数据区"><a href="#运行时数据区" class="headerlink" title="运行时数据区"></a>运行时数据区</h2><h3 id="程序计数器"><a href="#程序计数器" class="headerlink" title="程序计数器"></a>程序计数器</h3><ul><li>子节码的行号指示器</li><li>线程私有</li><li>未规定 OutOfMemoryError 情况</li></ul><h3 id="栈-虚拟机栈-本地方法栈"><a href="#栈-虚拟机栈-本地方法栈" class="headerlink" title="栈(虚拟机栈&#x2F;本地方法栈)"></a>栈(虚拟机栈&#x2F;本地方法栈)</h3><ul><li>线程私有</li><li>虚拟机栈(执行子节码)<ul><li>栈帧: 存储局变量表、操作数栈、动态连接、方法出口等信息</li><li>超出栈深度,抛出 StackOverflowError</li><li>若栈可以动态扩展,可能抛出 OutOfMemoryError</li></ul></li><li>本地方法栈<ul><li>执行本地方法,hot-spot 将其合并到虚拟机栈</li></ul></li></ul><h3 id="方法区"><a href="#方法区" class="headerlink" title="方法区"></a>方法区</h3><ul><li>所有线程共享</li><li>存储已被虚拟机加载的类型信息、常量、静态变量、即时编译器编译后的代码缓存等数据</li><li>永久代迁移为元空间(MetaSpace)</li><li>无法分配内存时抛出 OutOfMemoryError</li><li>运行时常量池<ul><li>可动态添加常量</li><li>无法分配内存时抛出 OutOfMemoryError</li></ul></li></ul><h3 id="堆"><a href="#堆" class="headerlink" title="堆"></a>堆</h3><ul><li>所有线程共享</li><li>无法扩展堆时抛出 OutOfMemoryError</li></ul><h3 id="直接内存-堆外内存"><a href="#直接内存-堆外内存" class="headerlink" title="直接内存(堆外内存)"></a>直接内存(堆外内存)</h3><ul><li>不属于虚拟机运行时数据区,通过 Native 函数直接分配</li><li>不受堆大小限制,但超出物理机内存限制时会抛出 OutOfMemoryError</li><li>GC 通过 Cleaner#clean 间接管理</li></ul><h2 id="Garbage-Collect"><a href="#Garbage-Collect" class="headerlink" title="Garbage Collect"></a>Garbage Collect</h2><h3 id="Young-GC"><a href="#Young-GC" class="headerlink" title="Young GC"></a>Young GC</h3><ul><li>Serial<ul><li>单线程,标记-复制算法</li></ul></li><li>ParNew<ul><li>一款多线程的收集器，采用标记-复制算法，主要工作在 Young 区，可以通过 -XX:ParallelGCThreads 参数来控制收集的线程数，整个过程都是 STW 的，常与 CMS 组合使用。</li></ul></li><li>Parallel Scavenge<ul><li>基于标记-复制</li><li>关注吞吐量<ul><li>-XX MaxGCPauseMillis 参数允许的值是一个大于 0 的毫秒数   收集器将尽力保证内存回收花费的时间不超过用户指定值。</li><li>-XX GCTimeRatio 参数的值则应当是一个大于 0 小于 100 的整数   也就是垃圾收集时间占总时间的比率,相当于吞吐量的倒数。</li><li>-XX +UseAdaptiveSizePolicy,vm 自适应调节策略</li></ul></li></ul></li></ul><h3 id="Old-GC"><a href="#Old-GC" class="headerlink" title="Old GC"></a>Old GC</h3><ul><li>CMS(Concurrent Mark and Sweep)<ul><li>以获取最短回收停顿时间为目标，采用“标记-清除”算法，分 4 大步进行垃圾收集，其中初始标记和重新标记会 STW ，多数应用于互联网站或者 B&#x2F;S 系统的服务器端上，JDK9 被标记弃用，JDK14 被删除，详情可见 JEP 363。</li><li>收集过程:<ul><li>初始标记(CMS initial mark)<em>stw</em></li><li>并发标记(CMS concurrent mark)</li><li>重新标记(CMS remark)<em>stw</em></li><li>并发清除(CMS concurrent sweep)</li></ul></li></ul></li><li>Serial Old<ul><li>单线程,标记-整理算法</li></ul></li><li>Parallel Old<ul><li>多线程,标记-整理算法</li></ul></li></ul><h3 id="分区收集"><a href="#分区收集" class="headerlink" title="分区收集"></a>分区收集</h3><ul><li>G1(Garbage First)</li><li>ZGC</li><li>Shenandoah</li></ul><h2 id="JVM-调优"><a href="#JVM-调优" class="headerlink" title="JVM 调优"></a>JVM 调优</h2><ul><li>逃逸分析技术,标量替换</li><li>常用的 JVM 调优参数</li></ul><h3 id="常用工具"><a href="#常用工具" class="headerlink" title="常用工具"></a>常用工具</h3><ul><li>命令行终端<ul><li>标准终端类：jps、jinfo、jstat、jstack、jmap</li><li>功能整合类：jcmd、vjtools、arthas、greys</li></ul></li><li>可视化界面<ul><li>简易：JConsole、JVisualvm、HA、GCHisto、GCViewer</li><li>进阶：MAT、JProfiler</li></ul></li></ul><h3 id="GC-问题评价标准"><a href="#GC-问题评价标准" class="headerlink" title="GC 问题评价标准"></a>GC 问题评价标准</h3><ul><li>延迟（Latency）：也可以理解为最大停顿时间，即垃圾收集过程中一次 STW 的最长时间，越短越好，一定程度上可以接受频次的增大，GC 技术的主要发展方向。</li><li>吞吐量（Throughput）：应用系统的生命周期内，由于 GC 线程会占用 Mutator 当前可用的 CPU 时钟周期，吞吐量即为 Mutator 有效花费的时间占系统总运行时间的百分比，例如系统运行了 100 min，GC 耗时 1 min，则系统吞吐量为 99%，吞吐量优先的收集器可以接受较长的停顿。</li><li>目标: 一次停顿的时间不超过应用服务的 TP9999，GC 的吞吐量不小于 99.99%</li></ul><h2 id="类加载"><a href="#类加载" class="headerlink" title="类加载"></a>类加载</h2><h3 id="类的生命周期"><a href="#类的生命周期" class="headerlink" title="类的生命周期"></a>类的生命周期</h3><ul><li>加载 Loading:查找并装载类型的二进制数据。</li><li>验证 Verification:确保被导入类型的正确性</li><li>准备 Preparation(连接 Linking):为类变量分配内存，并将其初始化为默认值。</li><li>解析 Resolution(连接 Linking):把类型中的符号引用转换为直接引用。</li><li>初始化 Initialization(连接 Linking):把类变量初始化为正确的初始值。</li><li>使用 Using</li><li>卸载 Unloading</li></ul><h3 id="类加载过程"><a href="#类加载过程" class="headerlink" title="类加载过程"></a>类加载过程</h3><ul><li>加载 Loading:查找并装载类型的二进制数据。</li><li>连接:执行验证、准备以及解析(可选)<ul><li>验证 Verification:确保被导入类型的正确性</li><li>准备 Preparation:为类变量分配内存，并将其初始化为默认值。</li><li>解析 Resolution(连接 Linking):把类型中的符号引用转换为直接引用。</li></ul></li><li>初始化 Initialization(连接 Linking):把类变量初始化为正确的初始值。<ul><li>Clinit 方法<ul><li>对于静态变量和静态初始化语句来说：执行的顺序和它们在类或接口中出现的顺序有关。</li><li>并非所有的类都需要在它们的class文件中拥有<clinit>()方法， 如果类没有声明任何类变量，也没有静态初始化语句，那么它就不会有<clinit>()方法。</li><li>只有那些需要执行Java代码来赋值的类才会有<clinit>()</li><li>jvm保证clinit的线程安全性,一个类型只会被初始化一次。</li></ul></li></ul></li></ul><h3 id="类加载器"><a href="#类加载器" class="headerlink" title="类加载器"></a>类加载器</h3><ul><li>Bootstrap ClassLoader：jvm实现的一部分(C++),负责加载核心 Java 库.</li><li>java.lang.ClassLoader<ul><li>Extention Classloader: 加载java扩展库</li><li>Application Classloader：根据 Java应用程序的类路径（ java.class.path 或 CLASSPATH 环境变量）来加载 Java 类。一般来说，Java 应用的类都是由它来完成加载的。可以通过 ClassLoader.getSystemClassLoader() 来获取它。</li><li>自定义类加载器：可以通过继承 java.lang.ClassLoader 类的方式实现自己的类加载器，以满足一些特殊的需求而不需要完全了解 Java 虚拟机的类加载的细节。</li></ul></li></ul><h3 id="双亲委派机制"><a href="#双亲委派机制" class="headerlink" title="双亲委派机制"></a>双亲委派机制</h3><ul><li>全盘负责：指当一个 ClassLoader 装载一个类的时，除非显式地使用另一个 ClassLoader ，该类所依赖及引用的类也由这个 ClassLoader 载入。</li><li>双亲委托机制：指先委托父装载器寻找目标类，只有在找不到的情况下才从自己的类路径中查找并装载目标类。</li><li>优点: 保证类的层级性与唯一性</li><li>破坏双亲委派模型:<ul><li>重写loadClass或findClass</li><li>Thread Context Loader加载SPI服务代码</li><li>OSGi热部署</li></ul></li></ul><h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote><ul><li><a href=""></a></li><li><a href=""></a></li></ul></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>java</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>core-java</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>202204</title>
+    <link href="/2022/05/13/program/interview/history/202204/"/>
+    <url>/2022/05/13/program/interview/history/202204/</url>
+    
+    <content type="html"><![CDATA[<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote><ul><li><a href=""></a></li><li><a href=""></a></li></ul></blockquote>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>interview</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>202203</title>
+    <link href="/2022/05/13/program/interview/history/202203/"/>
+    <url>/2022/05/13/program/interview/history/202203/</url>
+    
+    <content type="html"><![CDATA[<h2 id="1-SAP"><a href="#1-SAP" class="headerlink" title="1.SAP"></a>1.SAP</h2><ul><li>来源: v2ex内推</li><li>过程:面试三轮,笔试一轮<ul><li>第一轮: 电话面试,主要是常规八股文</li><li>第二轮: 公司现场做题,差不多40分钟,题目是算法easy,java编程,sql等等</li><li>第三轮: 架构师面,聊答题情况,聊项目,java八股</li><li>第四轮: manager面,介绍团队业务,聊薪资期望,表示给不了太高,让回去等通知</li></ul></li><li>耗时: 每轮在1小时左右, 后三轮一下午面完, 整体流程1周内</li><li>结果: 未拿到offer, 流程已走完, 估计原因是要价过高, 超出预算</li><li>总结: 工作较轻松, 内容偏传统toB, 薪资预算较低</li></ul><h2 id="2-宜家"><a href="#2-宜家" class="headerlink" title="2.宜家"></a>2.宜家</h2><ul><li>来源: 脉脉上hr主动联系</li><li>过程: 意向面一轮<ul><li>业务leader视频面, 聊跳槽原因, 个人规划等等</li></ul></li><li>结果: 未开始面试流程, 可能是表达了无定居上海的计划, 公司觉得不够稳定</li></ul><h2 id="3-Airwallex"><a href="#3-Airwallex" class="headerlink" title="3.Airwallex"></a>3.Airwallex</h2><ul><li>来源: 脉脉上hr主动联系</li><li>过程: 四轮技术面<ul><li>第一轮: 视频面试, 面试官先介绍自己, 然后简单聊聊项目, 然后做题, 三数之和, 要求O(N^2)复杂度, 貌似不可能达到</li><li>第二轮: 视频面试, 面试官先介绍自己, 然后聊项目, 系统设计, 设计一个酒店预订系统(booking), 答的不好</li><li>第三轮: 视频面试, 照例面试官先介绍自己, 然后简单聊聊项目, 然后是online coding, 实现一个方法,难度不大, 重点在思考全面和沟通, 算法题, 最多能喝几瓶汽水, 剑指offer里有, 不难</li><li>第四轮: 视频面试, 架构vp面, 结合项目聊八股, 分布式事务没答好, 需要再准备, 然后是一道数学题, 画函数曲线, 用英文简单介绍你当前的团队</li><li>hr面: 介绍公司业务, 优势, 了解期望薪资, 手头offer等, 薪资待定</li></ul></li><li>耗时: 每周一面, 每轮固定1小时</li><li>结果: offer, 等待薪资方案</li><li>总结: hr, 面试官都很专业, 面试中沟通较多, 体验较好</li></ul><h2 id="4-字节电商"><a href="#4-字节电商" class="headerlink" title="4.字节电商"></a>4.字节电商</h2><ul><li>来源: 脉脉上hr主动联系</li><li>过程: 技术三面, hr一面<ul><li>第一轮: 视频面试, 纯八股朗诵, 全程基本无交流, 算法: 合并k个有序链表, 写快了,又加了一个, k个一组反转链表, 写查询sql</li><li>第二轮: 视频面试, 纯八股朗诵, 会聊聊项目, 算法: 打家劫舍, lc原题, 需要额外输出抢过的房子</li><li>第三轮: 视频面试, 聊项目, 谈谈技术挑战, 针对涉及到的点进行提问, 算法: 求数字n的非空子序列, 写查询sql</li><li>第四轮: hr电话面试, 聊跳槽原因,当前工作强度,当前薪资,期望薪资,表示期望薪资很难给到,有其他offer可以argue,先申请offer,薪资可以再聊</li></ul></li><li>耗时: 每周一面, 每轮固定1小时</li><li>结果: 拿到offer,薪资待定</li><li>总结: 面试流程过于模板化, 缺少交流, 能感觉到面试官已经面麻了, hr业绩压力大, 很积极, 整体体验一般</li></ul><h2 id="5-Shopee营销"><a href="#5-Shopee营销" class="headerlink" title="5.Shopee营销"></a>5.Shopee营销</h2><ul><li>来源: 脉脉上hr主动联系</li><li>过程: 技术两面<ul><li>第一轮: 视频面试,结合项目聊八股, 然后是算法题, 后续hr反馈技术不扎实, 让多准备一下</li><li>第二轮: 视频面试,结合项目聊八股,算法是双指针相关的, 面试官提示后才想到用双指针滑动窗口, 系统设计: 设计一个短链接系统, 没看过, 直接挂</li></ul></li><li>耗时: 周日一面1个半小时, 下周二二面1小时, 据hr说技术总共就两轮, 流程较快, 面试偏八股, 整体体验一般</li><li>结果: 二面挂</li><li>总结: 相关八股和常见系统设计准备不充分, 算法框架缺乏总结,<ul><li>后续需要结合项目进一步加强八股(分布式事务,性能优化,阅读&lt;&lt;数据密集型应用系统设计&gt;&gt;)</li><li>常见系统设计要了解(短链接,秒杀,booking,youtube,twitter,etc, 可以去youtube上找相关视频)</li><li>整理刷过的算法类型,分类巩固,做题时用框架逐个往上套,加强解题能力</li></ul></li></ul><h3 id="5-1-Shopee商品"><a href="#5-1-Shopee商品" class="headerlink" title="5.1 Shopee商品"></a>5.1 Shopee商品</h3><ul><li>来源: hr捞起来换组面</li><li>过程: 技术两面<ul><li>第一轮: 视频面试<ul><li>HashMap实现, 是否线程安全? 描述一下并发resize形成环形链表的过程</li><li>安全的字典实现有哪些? HashTable, ConcurrentHashMap实现, 如何保证线程安全</li><li>volatile底层实现</li><li>synchronize底层实现</li><li>死锁条件? 有哪些场景?</li><li>进程和线程的区别, 内存分别是怎么分配的(todo)</li><li>TCP三次握手, 四次挥手</li><li>应用拆包的粘包问题(todo)</li><li>rpc框架序列化协议是什么, 怎么实现的(todo)</li><li>mysql四种隔离级别, 有哪些问题, 怎么解决, MVCC解决一致性读幻读, 行锁解决当前读幻读</li><li>mysql索引结构</li><li>无序数组获取前k个最大数</li><li>coding: 反转链表, 解析url</li></ul></li><li>第二轮</li></ul></li><li>结果: offer, 等待薪资方案</li><li>总结:</li></ul><h2 id="6-eBay"><a href="#6-eBay" class="headerlink" title="6.eBay"></a>6.eBay</h2><ul><li>来源: 脉脉上找人内推</li><li>过程: 技术一面<ul><li>第一轮: 电话面试,因为面试部门是做搜索相关的业务,所以很多搜索相关问题,基本答不上来</li></ul></li><li>耗时: 半小时左右,背景不太匹配,没有太多可聊的</li><li>结果: 一面挂</li><li>总结: 业务背景差异太大的不该勉强投,如果对方考察的是项目相关技术栈就很难准备, 基本就是浪费双方时间, 不如有合适的hc的时候再投</li></ul><h2 id="7-MicroSoft-Purview-search"><a href="#7-MicroSoft-Purview-search" class="headerlink" title="7.MicroSoft - Purview search"></a>7.MicroSoft - Purview search</h2><ul><li>来源: 找同学内推</li><li>过程: hr要求英文简历, 且提前了解了口语水平, 准备简历中<ul><li>第一轮: 视频面试,<ul><li>先做题: 给定一棵二叉树的根节点 root 和树中的一个节点 u ，返回与 u 所在层中距离最近的右侧节点, 当 u 是所在层中最右侧的节点，返回 null, 层序遍历即可, 注意判断每层边界.</li><li>聊项目, 技术栈: 框架-spring boot, 服务交互-rpc, 数据库, 注册中心, 配置中心, mq</li><li>当前最有技术挑战的工作, 难点在哪里? 怎么解决?</li><li>Spring bean生命周期, spring优缺点</li><li>反思: 回答前提前弄清面试官真正关注的点, 可以节省很多时间, 提升双方的面试体验</li></ul></li></ul></li><li>结果: 一面挂, 反馈方向不匹配, coding不理想</li><li>总结: 还是应该找相关业务的岗位, 跨度太大面试很难成功</li></ul><h2 id="8-Booking"><a href="#8-Booking" class="headerlink" title="8.Booking"></a>8.Booking</h2><ul><li>来源: v2ex内推</li><li>过程:<ul><li>hr初步沟通, 会了解口语水平, 且后续面试要求全英文, 整体流程为: 一轮笔试, 一轮算法, 一轮系统设计, 一轮Culture Fit</li><li>第一轮笔试, 在Hackerrank上做三道题, 限时90分钟, 需要提前适应这个网站</li><li>第二轮coding, 60分钟, 2个面试官<ul><li>互相做自我介绍, 然后开始做题, 偏应用: 汇率换算, 给定一系列货币换算关系, 需要判断当前货币能否换算为目标货币, 不能返回-1, 能则返回具体的值, 每次过汇附固定交易费(无向有权图的最短路径, Dijkstra算法)</li><li>Q1: What’s the concrete business for this job?</li><li>Q2: Have you ever worked in other company? What’s the difference between booking and other company in your opinion</li></ul></li><li>结果: coding面挂</li><li>总结: 英文沟通能力太差, 极大影响了思考过程, 问题并不难, 但没能在有限的时间内想出解决方法并清晰的阐述出来, 后续要提升表达自己思考过程的能力, 可以参考一定的模板去说</li></ul></li></ul><h2 id="9-Amazon"><a href="#9-Amazon" class="headerlink" title="9.Amazon"></a>9.Amazon</h2><ul><li>来源: 脉脉找人内推</li><li>过程: 申请后暂无反馈</li></ul><h2 id="10-coupang"><a href="#10-coupang" class="headerlink" title="10.coupang"></a>10.coupang</h2><ul><li>来源: v2ex内推</li><li>过程: 当前只有高职级hc, 简历未通过</li></ul><h2 id="11-PayPal"><a href="#11-PayPal" class="headerlink" title="11.PayPal"></a>11.PayPal</h2><ul><li>来源: 公众号HJ说内推</li><li>过程: 跟内推人沟通了解到当前开放的hc业务背景不匹配, 所以暂时不投递</li></ul><h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote><ul><li><a href=""></a></li><li><a href=""></a></li></ul></blockquote>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>interview</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Design Data-Intensive Application</title>
+    <link href="/2022/05/13/program/system%20design/DDIA/"/>
+    <url>/2022/05/13/program/system%20design/DDIA/</url>
+    
+    <content type="html"><![CDATA[<h2 id="Chapter-1-可靠、可扩展与可维护的应用系统"><a href="#Chapter-1-可靠、可扩展与可维护的应用系统" class="headerlink" title="Chapter 1 可靠、可扩展与可维护的应用系统"></a>Chapter 1 可靠、可扩展与可维护的应用系统</h2><ul><li>Reliable</li><li>Scalable</li><li>Maintainable<ul><li>可运维性</li><li>简单性</li><li>可演化性</li></ul></li></ul><h2 id="Chapter-2-数据模型与查询语言"><a href="#Chapter-2-数据模型与查询语言" class="headerlink" title="Chapter 2 数据模型与查询语言"></a>Chapter 2 数据模型与查询语言</h2><h3 id="关系模型"><a href="#关系模型" class="headerlink" title="关系模型"></a>关系模型</h3><ul><li>主要支持一对多</li><li>多对一</li><li>多对多</li><li>强关联</li><li>显式的写时模式(字段是定义好的)</li></ul><h3 id="文档模型"><a href="#文档模型" class="headerlink" title="文档模型"></a>文档模型</h3><ul><li>主要支持一对多, 或者无关联</li><li>弱关联</li><li>隐式的读时模式(由应用代码决定字段解析)</li></ul><h3 id="图状数据模型"><a href="#图状数据模型" class="headerlink" title="图状数据模型"></a>图状数据模型</h3><ul><li>支持关联关系复杂</li><li>复杂关联</li></ul><h3 id="数据查询语言"><a href="#数据查询语言" class="headerlink" title="数据查询语言"></a>数据查询语言</h3><h2 id="Chapter-3-数据存储与检索"><a href="#Chapter-3-数据存储与检索" class="headerlink" title="Chapter 3 数据存储与检索"></a>Chapter 3 数据存储与检索</h2><h3 id="索引-读写-时间空间的权衡"><a href="#索引-读写-时间空间的权衡" class="headerlink" title="索引 - 读写, 时间空间的权衡"></a>索引 - 读写, 时间空间的权衡</h3><ul><li><p>哈希索引</p><ul><li>优点: 等值查询快, 写入快</li><li>缺点: 需要全部加载到内存中, 不支持区间查询</li></ul></li><li><p>SSTables和LSM-Tree</p><ul><li>SSTables 排序字符串表</li><li>LSM-Tree Log-Structured Merge-Tree 日志结构的合并树</li><li>LSM存储引擎: 基于合并和压缩排序文件</li><li>查询: 因为key有序, 因此无需加载所有key到内存中, 稀疏加载即可, 且支持范围查询</li><li>写入: 内存中维护有序数据结构(红黑树,AVL树)<ul><li>1.写入内存中的红黑树, 并同步写磁盘日志(无需有序,用于崩溃后恢复内存表)</li><li>2.内存大于阈值, 写SSTables文件</li><li>3.读取顺序: 内存 -&gt; 最新磁盘段文件 -&gt; 次新…</li><li>4.后台周期性执行合并(类似归并排序,保留最新值,丢弃旧值),压缩段文件(稀疏内存索引指向每个压缩段的开头)</li></ul></li><li>性能优化: 查询不存在的键<ul><li>布隆过滤器</li><li>SSTables压缩策略<ul><li>分层压缩(LevelDB,RocksDB): 分裂为多个更小的SSTables, 旧数据移到单独的层级, 可以逐步压缩以节省磁盘空间</li><li>大小分级压缩(HBase): 合并较新,较小到较旧, 较大的SSTables中</li></ul></li></ul></li></ul></li><li><p>B-trees</p><ul><li>key有序, 按页读取&#x2F;写入数据</li><li>拥有N个键的树高度总是为O(logN)</li><li>WAL(Write-ahead Log) redo log: 崩溃恢复</li><li>原地覆盖更新(仅追加写入), 使用锁存器保证并发写安全</li><li>优化措施<ul><li>写时复制: 修改的页写入不同的位置, 创建父页新版本, 指向新位置</li><li>B+ Tree: 只在叶子节点保存value</li></ul></li></ul></li><li><p>其他索引</p><ul><li>二级索引</li><li>聚簇索引</li><li>联合索引</li><li>多维索引<ul><li>经纬度查询:空间索引</li></ul></li><li>全文搜索和模糊索引</li></ul></li><li><p>内存数据库</p><ul><li>读写在内存中, 性能更高</li><li>可以提供高级数据结构(Redis的List,Set等)</li><li>NVM(non-volatile memory) 非易失性内存</li></ul></li></ul><h3 id="事务处理与分析处理"><a href="#事务处理与分析处理" class="headerlink" title="事务处理与分析处理"></a>事务处理与分析处理</h3><ul><li><p>OLTP online transaction processing 在线事务处理</p><ul><li>面向用户, 接受大量请求, 每个查询只涉及少量记录</li><li>存储引擎通过索引查询数据, 磁盘寻道是瓶颈</li><li>存储引擎<ul><li>日志结构类. 追加更新, 删除过时文件, 不会修改已写入的文件. (BitCask, SSTables, LSM-tree, LEvelDB, RocksDB, Cassandra, HBase, Lucene)<ul><li>核心是将随机写转化为顺序写, 可以实现更高的吞吐量</li></ul></li><li>原地覆盖类. 将磁盘视为可以覆盖的一组固定大小的页. (B-Tree)</li></ul></li></ul></li><li><p>OLAP onlie analytic processing 在线分析处理</p><ul><li>面向业务分析人员, 请求量小但每次查询数据量大,磁盘带宽是瓶颈</li><li>常见解决方案: 面向列的存储</li></ul></li><li><p>数据仓库</p><ul><li>OLTP的只读副本</li><li>通过ETL(Extract-Transform-Load提取-转换-加载)导入</li><li>TODO</li></ul></li></ul><h2 id="Chapter-4-数据编码-序列化-与演化"><a href="#Chapter-4-数据编码-序列化-与演化" class="headerlink" title="Chapter 4 数据编码(序列化)与演化"></a>Chapter 4 数据编码(序列化)与演化</h2><h3 id="数据编码-序列化-格式-数据传递的格式"><a href="#数据编码-序列化-格式-数据传递的格式" class="headerlink" title="数据编码(序列化)格式(数据传递的格式)"></a>数据编码(序列化)格式(数据传递的格式)</h3><ul><li><p>数据编码(序列化)</p><ul><li>序列化: 内存表示到字节序列</li><li>反序列化: 字节序列到内存表示</li></ul></li><li><p>序列化格式</p><ul><li>语言特定: java serializable<ul><li>缺点:<ul><li>绑定语言</li><li>反序列化存在安全问题</li><li>版本兼容性差</li><li>效率较低</li></ul></li></ul></li><li>JSON XML 二进制变体<ul><li>优点: 可读, 模式可选, 较灵活</li><li>缺点:<ul><li>XML过于冗长</li><li>JSON不支持大数字(&gt;2^53)</li><li>JSON, XML不支持二进制字符串</li></ul></li></ul></li><li>二进制编码<ul><li>Apache Thrift</li><li>Protocol Buffers</li><li>Apache Avro</li><li>优点<ul><li>更紧凑, 节省网络带宽</li><li>携带模式信息, 方便检测兼容性</li></ul></li><li>缺点: 不可读</li></ul></li></ul></li></ul><h3 id="数据流模式-多进程传递数据的方式"><a href="#数据流模式-多进程传递数据的方式" class="headerlink" title="数据流模式-多进程传递数据的方式"></a>数据流模式-多进程传递数据的方式</h3><ul><li><p>基于数据库的数据流</p><ul><li>考虑字段变动的兼容</li><li>写入时编码, 读取时解码</li></ul></li><li><p>基于服务调用(REST, RPC)</p><ul><li>REST: 简洁, 通用, 适用于外部服务</li><li>RPC: 定制, 更高效, 适用于内部服务</li></ul></li><li><p>基于消息队列</p><ul><li>优点<ul><li>消除峰值</li><li>自动重试</li><li>支持一对多广播</li><li>服务间解耦</li></ul></li></ul></li></ul><h2 id="PART2-分布式数据系统"><a href="#PART2-分布式数据系统" class="headerlink" title="PART2 分布式数据系统"></a>PART2 分布式数据系统</h2><ul><li><p>分布式设计的目的</p><ul><li>扩展性</li><li>容错与高可用性</li><li>延迟考虑</li></ul></li><li><p>分布式数据保存的常见方式</p><ul><li>复制: 多节点保存多份相同的数据副本</li><li>分区: 将数据拆分到不同节点分区上(分片)</li></ul></li></ul><h2 id="Chapter-5-数据复制"><a href="#Chapter-5-数据复制" class="headerlink" title="Chapter 5 数据复制"></a>Chapter 5 数据复制</h2><p>  通过数据复制达到以下目的:</p><ul><li>地理位置上接近用户, 降低延迟</li><li>部分故障时系统仍可用, 提高可用性</li><li>扩展多节点同时提供数据访问服务, 提高读吞吐量</li></ul><h3 id="主节点与从节点-主从复制"><a href="#主节点与从节点-主从复制" class="headerlink" title="主节点与从节点(主从复制)"></a>主节点与从节点(主从复制)</h3><ul><li>半同步复制: 始终保持一个从节点同步复制, 其他从节点异步复制<ul><li>优点: 始终有两个最新的节点</li><li>缺点: 影响主节点写入性能</li></ul></li><li>全异步复制: 所有从节点都是异步复制<ul><li>优点: 主节点写入性能最高, 系统吞吐量大</li><li>缺点: 主节点宕机, 未同步数据会丢失</li></ul></li></ul><p>配置新的从节点</p><ul><li>快照主节点</li><li>拷贝快照到新的从节点</li><li>从节点连接到主节点请求快照点后的数据变更</li><li>追赶变更</li></ul><p>处理节点失效</p><ul><li>从节点失效<ul><li>追赶式恢复</li></ul></li><li>主节点失效<ul><li>节点切换</li><li>自动切换<ul><li>1.确认主节点失效. 一般基于心跳超时</li><li>2.选主. 共识算法</li><li>3.重新配置主节点. 更新请求路由</li></ul></li><li>自动切换可能的问题<ul><li>1.新主节点与原主节点发生写冲突, 异步复制模式下部分写请求可能未同步到新主节点上, 一般丢弃未复制的写请求</li><li>2.丢弃数据风险极大, 如果数据库之外存在依赖数据库内容协同使用的系统, 可能出现意外错误</li><li>3.可能遇到脑裂问题: 多个从节点都认为自己是主节点</li><li>4.如何设置合适的超时时间来检测主节点失效?</li></ul></li></ul></li></ul><p>主从复制复制日志的实现</p><ul><li>1.基于语句的复制. 需要替换非确定性函数<ul><li>优点: 简单直接</li><li>缺点: 部分场景不适用, 需要特殊处理(非确定性函数, 自增列, 有副作用的语句(触发器,存储过程等))</li></ul></li><li>2.基于预写日志(WAL)传输<ul><li>优点: 日志结构类和Btree类存储引擎都有WAL日志, 天然支持日志同步</li><li>缺点: WAL日志过于底层, 与存储引擎耦合严重, 新旧版本可能不兼容, 有可能需要停机升级</li></ul></li><li>3.基于行的逻辑日志复制<ul><li>优点: 日志格式与存储引擎解耦, 易于向后兼容, 便于外部系统获取解析日志(变更数据捕获), 例如: MySQL binlog</li></ul></li><li>4.基于触发器的复制<ul><li>优点: 应用层定制逻辑, 更灵活</li><li>缺点: 性能差, 容易出错</li></ul></li></ul><h3 id="处理复制滞后"><a href="#处理复制滞后" class="headerlink" title="处理复制滞后"></a>处理复制滞后</h3><p>读自己的写read-after-write</p><ul><li>问题原因：数据还未同步到从节点，导致读不到刚写入的数据</li><li>解决方案：<ul><li>1.强制从主节点读<ul><li>优点: 逻辑简单</li><li>缺点: 只适用于部分场景, 大量应用会丧失读操作的可扩展性</li></ul></li><li>2.选择性读主节点<ul><li>优点: 满足读写一致的前提下尽可能提升读操作的可扩展性</li><li>缺点: 实现逻辑较复杂, 需要处理边界条件</li><li>方式<ul><li>记录更新时间. 小于一定阈值走主节点, 并监控从节点复制滞后程度, 避免从滞后过多的从节点多</li><li>客户端上送更新时间戳. 查询获取数据时间戳不够新则走主节点</li><li>副本分布在多数据中心时需要先把请求路由到主节点所在的数据中心</li></ul></li><li>考虑多设备的读写一致性<ul><li>更新时间戳需要共享</li><li>不同网络接入请求路由到的数据中心不可控</li></ul></li></ul></li></ul></li></ul><p>单调读</p><ul><li>问题原因：两次查询发生在不同的从节点，由于复制滞后导致查询结果不一致</li><li>解决方案<ul><li>每个用户从固定副本读数据，比如基于用户id取模</li></ul></li></ul><p>前缀一致读</p><ul><li>对于一系列按照某个顺序发生的写请求，那么读取这些内容时也要按照当时写入的顺序</li><li>问题原因：分区数据经多副本复制后出现了不同程度的滞后，导致观察者先看到果后看到因</li></ul><h3 id="多主复制"><a href="#多主复制" class="headerlink" title="多主复制"></a>多主复制</h3><h3 id="无主复制"><a href="#无主复制" class="headerlink" title="无主复制"></a>无主复制</h3><h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote><ul><li><a href=""></a></li><li><a href=""></a></li></ul></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>system-design</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>ddia</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Network</title>
+    <link href="/2022/05/13/program/network/network/"/>
+    <url>/2022/05/13/program/network/network/</url>
+    
+    <content type="html"><![CDATA[<h2 id="网路协议分层"><a href="#网路协议分层" class="headerlink" title="网路协议分层"></a>网路协议分层</h2><ul><li>OSI七层</li><li>TCP&#x2F;IP五层<ul><li>应用层</li><li>传输层</li><li>网络层</li><li>数据链路层</li><li>物理层</li></ul></li></ul><h3 id="TCP"><a href="#TCP" class="headerlink" title="TCP"></a>TCP</h3><ul><li>传输控制协议 TCP（Transmission Control Protocol）是面向连接的，提供可靠交付，有流量控制，拥塞控制，提供全双工通信，面向字节流（把应用层传下来的报文看成字节流，把字节流组织成大小不等的数据块），每一条 TCP 连接只能是点对点的（一对一）</li><li>建立连接:三次握手</li><li>断开连接:四次挥手</li><li>流量控制: 让接收方能来得及接收<ul><li>滑动窗口</li></ul></li><li>拥塞控制: 降低整个网络的拥塞程度<ul><li>慢开始</li><li>拥塞避免</li><li>快重传</li><li>快恢复</li></ul></li></ul><h3 id="UDP"><a href="#UDP" class="headerlink" title="UDP"></a>UDP</h3><ul><li>用户数据报协议 UDP（User Datagram Protocol）是无连接的，尽最大可能交付，没有拥塞控制，面向报文（对于应用程序传下来的报文不合并也不拆分，只是添加 UDP 首部），支持一对一、一对多、多对一和多对多的交互通信。</li></ul><h3 id="IP"><a href="#IP" class="headerlink" title="IP"></a>IP</h3><h3 id="HTTP-HTTPS"><a href="#HTTP-HTTPS" class="headerlink" title="HTTP&#x2F;HTTPS"></a>HTTP&#x2F;HTTPS</h3><h3 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h3><ul><li>打开一个 URL 的过程</li></ul><h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote><ul><li><a href=""></a></li><li><a href=""></a></li></ul></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>network</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>network</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Linux</title>
+    <link href="/2022/05/13/program/operation%20system/Linux/"/>
+    <url>/2022/05/13/program/operation%20system/Linux/</url>
+    
+    <content type="html"><![CDATA[<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><ul><li>select 和 epoll</li><li>进程的调度,时间片轮转算法</li><li>进程通信的方式有哪些</li><li>管道的底层原理</li></ul><h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote><ul><li><a href=""></a></li><li><a href=""></a></li></ul></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>os</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Kafka</title>
+    <link href="/2022/05/13/program/message%20queue/Kafka/"/>
+    <url>/2022/05/13/program/message%20queue/Kafka/</url>
+    
+    <content type="html"><![CDATA[<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote><ul><li><a href=""></a></li><li><a href=""></a></li></ul></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>message-queue</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>kafka</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Dynamic Planning</title>
+    <link href="/2022/05/13/program/algorithm/DP/"/>
+    <url>/2022/05/13/program/algorithm/DP/</url>
+    
+    <content type="html"><![CDATA[<ul><li>解题框架</li></ul><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs java"># 初始化 base <span class="hljs-keyword">case</span><br>dp[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>][...] = base<br># 进行状态转移<br><span class="hljs-keyword">for</span> 状态<span class="hljs-number">1</span> in 状态<span class="hljs-number">1</span>的所有取值：<br>    <span class="hljs-keyword">for</span> 状态<span class="hljs-number">2</span> in 状态<span class="hljs-number">2</span>的所有取值：<br>        <span class="hljs-keyword">for</span> ...<br>            dp[状态<span class="hljs-number">1</span>][状态<span class="hljs-number">2</span>][...] = 求最值(选择<span class="hljs-number">1</span>，选择<span class="hljs-number">2.</span>..)<br></code></pre></td></tr></table></figure><h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2>]]></content>
+    
+    
+    <categories>
+      
+      <category>algorithm</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>DP</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Depth First Search</title>
+    <link href="/2022/05/13/program/algorithm/DFS/"/>
+    <url>/2022/05/13/program/algorithm/DFS/</url>
+    
+    <content type="html"><![CDATA[<ul><li>解题框架</li></ul><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs java">result = []<br>def <span class="hljs-title function_">backtrack</span><span class="hljs-params">(路径, 选择列表)</span>:<br>    <span class="hljs-keyword">if</span> 满足结束条件:<br>        result.add(路径)<br>        <span class="hljs-keyword">return</span><br>    <br>    <span class="hljs-keyword">for</span> 选择 in 选择列表:<br>        做选择<br>        backtrack(路径, 选择列表)<br>        撤销选择<br></code></pre></td></tr></table></figure><h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2>]]></content>
+    
+    
+    <categories>
+      
+      <category>algorithm</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>DFS</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Breadth First Search</title>
+    <link href="/2022/05/13/program/algorithm/BFS/"/>
+    <url>/2022/05/13/program/algorithm/BFS/</url>
+    
+    <content type="html"><![CDATA[<h3 id="BFS"><a href="#BFS" class="headerlink" title="BFS"></a>BFS</h3><ul><li>解题框架</li></ul><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 计算从起点 start 到终点 target 的最近距离</span><br><span class="hljs-type">int</span> <span class="hljs-title function_">BFS</span><span class="hljs-params">(Node start, Node target)</span> &#123;<br>    Queue&lt;Node&gt; q; <span class="hljs-comment">// 核心数据结构</span><br>    Set&lt;Node&gt; visited; <span class="hljs-comment">// 避免走回头路</span><br>    <br>    q.offer(start); <span class="hljs-comment">// 将起点加入队列</span><br>    visited.add(start);<br>    <span class="hljs-type">int</span> <span class="hljs-variable">step</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; <span class="hljs-comment">// 记录扩散的步数</span><br><br>    <span class="hljs-keyword">while</span> (q not empty) &#123;<br>        <span class="hljs-type">int</span> <span class="hljs-variable">sz</span> <span class="hljs-operator">=</span> q.size();<br>        <span class="hljs-comment">/* 将当前队列中的所有节点向四周扩散 */</span><br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; sz; i++) &#123;<br>            <span class="hljs-type">Node</span> <span class="hljs-variable">cur</span> <span class="hljs-operator">=</span> q.poll();<br>            <span class="hljs-comment">/* 划重点：这里判断是否到达终点 */</span><br>            <span class="hljs-keyword">if</span> (cur is target)<br>                <span class="hljs-keyword">return</span> step;<br>            <span class="hljs-comment">/* 将 cur 的相邻节点加入队列 */</span><br>            <span class="hljs-keyword">for</span> (Node x : cur.adj()) &#123;<br>                <span class="hljs-keyword">if</span> (x not in visited) &#123;<br>                    q.offer(x);<br>                    visited.add(x);<br>                &#125;<br>            &#125;<br>        &#125;<br>        <span class="hljs-comment">/* 划重点：更新步数在这里 */</span><br>        step++;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure><h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2>]]></content>
+    
+    
+    <categories>
+      
+      <category>algorithm</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>BFS</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Sorting</title>
+    <link href="/2022/05/13/program/algorithm/Sorting/"/>
+    <url>/2022/05/13/program/algorithm/Sorting/</url>
+    
+    <content type="html"><![CDATA[<h3 id="八大排序"><a href="#八大排序" class="headerlink" title="八大排序"></a>八大排序</h3><ul><li>插入排序<ul><li>1.直接插入排序</li><li>2.希尔排序</li></ul></li><li>选择排序<ul><li>3.选择排序</li><li>4.堆排序</li></ul></li><li>交换排序<ul><li>5.冒泡排序</li><li>6.快速排序</li></ul></li><li>归并排序<ul><li>7.归并排序</li></ul></li><li>8.基数排序</li></ul><h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2>]]></content>
+    
+    
+    <categories>
+      
+      <category>algorithm</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>sorting</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Datastructure</title>
+    <link href="/2022/05/13/program/algorithm/Datastructure/"/>
+    <url>/2022/05/13/program/algorithm/Datastructure/</url>
+    
+    <content type="html"><![CDATA[<h2 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h2><h3 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h3><ul><li>前缀数组</li><li>差分数组</li><li>二分查找</li><li>双指针</li></ul><h3 id="链表"><a href="#链表" class="headerlink" title="链表"></a>链表</h3><h3 id="栈"><a href="#栈" class="headerlink" title="栈"></a>栈</h3><h3 id="队列"><a href="#队列" class="headerlink" title="队列"></a>队列</h3><h3 id="二叉树"><a href="#二叉树" class="headerlink" title="二叉树"></a>二叉树</h3><ul><li><p>二叉搜索树BST</p></li><li><p>二叉平衡AVL</p></li><li><p>红黑树</p></li><li><p>前序遍历</p></li></ul><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">void</span> <span class="hljs-title function_">preOrder</span><span class="hljs-params">(TreeNode root)</span> &#123;<br>    <span class="hljs-keyword">if</span>(root == <span class="hljs-literal">null</span>) <span class="hljs-keyword">return</span>;<br>    System.out.println(root.val);<br>    preOrder(root.left);<br>    preOrder(root.right);<br>&#125;<br></code></pre></td></tr></table></figure><ul><li>中序遍历</li></ul><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">void</span> <span class="hljs-title function_">inOrder</span><span class="hljs-params">(TreeNode root)</span> &#123;<br>    <span class="hljs-keyword">if</span>(root == <span class="hljs-literal">null</span>) <span class="hljs-keyword">return</span>;<br>    preOrder(root.left);<br>    System.out.println(root.val);<br>    preOrder(root.right);<br>&#125;<br></code></pre></td></tr></table></figure><ul><li>后序遍历</li></ul><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">void</span> <span class="hljs-title function_">postOrder</span><span class="hljs-params">(TreeNode root)</span> &#123;<br>    <span class="hljs-keyword">if</span>(root == <span class="hljs-literal">null</span>) <span class="hljs-keyword">return</span>;<br>    preOrder(root.left);<br>    preOrder(root.right);<br>    System.out.println(root.val);<br>&#125;<br></code></pre></td></tr></table></figure><h3 id="多叉树"><a href="#多叉树" class="headerlink" title="多叉树"></a>多叉树</h3><ul><li>B树</li><li>B+树</li></ul><h3 id="图"><a href="#图" class="headerlink" title="图"></a>图</h3><ul><li><p>构成:</p><ul><li>节点</li><li>边</li></ul></li><li><p>表示:</p><ul><li>邻接表 <code>List&lt;Integer&gt;[]</code></li><li>邻接矩阵 <code>boolean[][] matrix = new boolean[from][to]</code></li></ul></li><li><p>度</p><ul><li>无向图: 每个节点相连的边的条数</li><li>有向图: 入度(指向当前节点) 和 出度(从当前节点指向别的节点)</li></ul></li><li><p>加权: 每条边有一定的权重</p></li><li><p>有向图环检测</p><ul><li>DFS记录遍历path</li><li>BFS结合入度(保证不走回头路)数量遍历图, 遍历次数等于节点数则表示无环</li></ul></li><li><p>拓扑排序: 有向无环图</p><ul><li>DFS后序遍历结果反转后即为排序结果</li><li>BFS结合入度遍历图, 遍历顺序即为排序结果</li></ul></li><li><p>二分图</p></li><li><p>DFS遍历</p></li></ul><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 记录从起点到当前节点的路径</span><br>List&lt;Integer&gt; path;<br><span class="hljs-comment">// 记录被遍历过的节点</span><br>Set&lt;Integer&gt; visited;<br><br><span class="hljs-comment">/* 图遍历框架 */</span><br><span class="hljs-keyword">void</span> <span class="hljs-title function_">traverse</span><span class="hljs-params">(<span class="hljs-type">int</span>[][] graph, <span class="hljs-type">int</span> n)</span>&#123;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; n; i++)&#123; <br>        <span class="hljs-comment">// 图中并不是所有节点都相连，所以要用一个 for 循环将所有节点都作为起点调用一次 DFS 搜索算法。</span><br>        traverse(graph, i);<br>    &#125;<br>&#125;<br><span class="hljs-keyword">void</span> <span class="hljs-title function_">traverse</span><span class="hljs-params">(<span class="hljs-type">int</span>[][] graph, <span class="hljs-type">int</span> start)</span> &#123;<br>    <span class="hljs-keyword">if</span>(visited.contains(start)) <span class="hljs-keyword">return</span>;<br>    <span class="hljs-comment">// 做选择：标记节点start在路径上</span><br>    path.add(start);<br>    <span class="hljs-comment">// 经过节点start，标记为已遍历</span><br>    visited.add(start);<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> n : graph[start]) &#123;<br>        traverse(graph, n);<br>    &#125;<br>    <span class="hljs-comment">// 撤销选择：节点start离开路径</span><br>    path.remove(path.size() - <span class="hljs-number">1</span>);<br>&#125;<br></code></pre></td></tr></table></figure><ul><li>BFS遍历</li></ul><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">void</span> <span class="hljs-title function_">traverse</span><span class="hljs-params">(<span class="hljs-type">int</span>[][] graph, <span class="hljs-type">int</span> n)</span>&#123;<br>    <span class="hljs-comment">// 构建入度</span><br>    <span class="hljs-type">int</span>[] indegree = <span class="hljs-keyword">new</span> <span class="hljs-title class_">int</span>[n];<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; n; i++)&#123;<br>        <span class="hljs-type">int</span>[] next = graph[i];<br>        <span class="hljs-keyword">if</span>(next != <span class="hljs-literal">null</span>)&#123;<br>            indegree[i] = next.length;<br>        &#125;<br>    &#125;<br>    Queue&lt;Integer&gt; q = <span class="hljs-keyword">new</span> <span class="hljs-title class_">LinkedList</span>&lt;&gt;();<br>    <span class="hljs-comment">// 入度为0的作为起点</span><br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; n; i++)&#123;<br>        <span class="hljs-keyword">if</span>(indegree[i] == <span class="hljs-number">0</span>) q.add(i);<br>    &#125;<br>    <span class="hljs-comment">// 记录遍历节点数</span><br>    <span class="hljs-type">int</span> <span class="hljs-variable">count</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>;<br>    <span class="hljs-comment">// 遍历路径即为拓扑排序结果</span><br>    <span class="hljs-type">int</span>[] path = <span class="hljs-keyword">new</span> <span class="hljs-title class_">int</span>[n];<br>    <span class="hljs-comment">// 遍历图</span><br>    <span class="hljs-keyword">while</span>(!q.isEmpty())&#123;<br>        <span class="hljs-type">int</span> <span class="hljs-variable">curr</span> <span class="hljs-operator">=</span> q.poll();<br>        path[count] = curr;<br>        count++;<br>        <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> next : graph[curr])&#123;<br>            indegree[next]--;<br>            <span class="hljs-comment">// 入度节点都被遍历完, 当前节点可以加入队列</span><br>            <span class="hljs-keyword">if</span>(indegree[next] == <span class="hljs-number">0</span>) q.add(next);<br>        &#125;<br>    &#125;<br>    <span class="hljs-comment">// 遍历节点等于全量节点, 说明图无环</span><br>    <span class="hljs-comment">// return count == n</span><br>&#125;<br></code></pre></td></tr></table></figure><ul><li>Dijkstra最短路径算法</li></ul><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><code class="hljs java"><br><span class="hljs-comment">// 记录到达当前节点的距离</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">State</span>&#123;<br>    <span class="hljs-comment">// 节点id</span><br>    <span class="hljs-type">int</span> node;<br>    <span class="hljs-comment">// 从起点到当前节点的距离</span><br>    <span class="hljs-type">int</span> dis;<br>    State(<span class="hljs-type">int</span> node, <span class="hljs-type">int</span> dis)&#123;<br>        <span class="hljs-built_in">this</span>.node = node;<br>        <span class="hljs-built_in">this</span>.dis = dis;<br>    &#125;<br>&#125;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 1.build graph with adjacent list</span><br><span class="hljs-comment"> * 2.use Dijkstra find shortest path</span><br><span class="hljs-comment"> * TC=O(ElogE), SC=O(E), E=edges.length</span><br><span class="hljs-comment"> */</span><br><span class="hljs-type">int</span>[] shortestPath(<span class="hljs-type">int</span> n, <span class="hljs-type">int</span>[][] edges, <span class="hljs-type">int</span> start)&#123;<br>    Map&lt;Integer, Integer&gt;[] graph = <span class="hljs-keyword">new</span> <span class="hljs-title class_">HashMap</span>[n];<br>    <span class="hljs-comment">// 1.build graph with adjacent list</span><br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span>[] edge : edges)&#123;<br>        <span class="hljs-type">int</span> <span class="hljs-variable">from</span> <span class="hljs-operator">=</span> edge[<span class="hljs-number">0</span>], to = edge[<span class="hljs-number">1</span>], weight = edge[<span class="hljs-number">2</span>];<br>        <span class="hljs-keyword">if</span>(graph[from] == <span class="hljs-literal">null</span>) graph[from] = <span class="hljs-keyword">new</span> <span class="hljs-title class_">HashMap</span>&lt;&gt;();<br>        graph[from].put(to, weight);<br>    &#125;<br>    <span class="hljs-type">int</span>[] disTo = <span class="hljs-keyword">new</span> <span class="hljs-title class_">int</span>[n];<br>    Arrays.fill(disTo, Integer.MAX_VALUE);<br>    <span class="hljs-comment">// base case</span><br>    disTo[start] = <span class="hljs-number">0</span>;<br>    Queue&lt;State&gt; pq = <span class="hljs-keyword">new</span> <span class="hljs-title class_">PriorityQueue</span>&lt;&gt;();<br>    pq.add(<span class="hljs-keyword">new</span> <span class="hljs-title class_">State</span>(start, <span class="hljs-number">0</span>));<br>    <span class="hljs-comment">// 2.use Dijkstra find shortest path</span><br>    <span class="hljs-keyword">while</span>(!pq.isEmpty())&#123;<br>        <span class="hljs-type">State</span> <span class="hljs-variable">curr</span> <span class="hljs-operator">=</span> pq.poll();<br>        <span class="hljs-type">int</span> <span class="hljs-variable">currNode</span> <span class="hljs-operator">=</span> curr.node;<br>        <span class="hljs-type">int</span> <span class="hljs-variable">currDis</span> <span class="hljs-operator">=</span> curr.dis;<br>        <span class="hljs-keyword">if</span>(currDis &gt; disTo[currNode])&#123;<br>            <span class="hljs-comment">// already had shorter path</span><br>            <span class="hljs-keyword">continue</span>;<br>        &#125;<br>        <span class="hljs-keyword">if</span>(graph[currNode] == <span class="hljs-literal">null</span>) <span class="hljs-keyword">continue</span>;<br>        <span class="hljs-comment">// traverse adjacent node</span><br>        <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> next : graph[currNode].keySet())&#123;<br>            <span class="hljs-type">int</span> <span class="hljs-variable">nextDis</span> <span class="hljs-operator">=</span> currDis + graph[currNode].get(next);<br>            <span class="hljs-comment">// update disTo[next] if from currNode to nextNode is shorter</span><br>            <span class="hljs-keyword">if</span>(nextDis &lt; disTo[next])&#123;<br>                disTo[next] = nextDis;<br>                pq.add(<span class="hljs-keyword">new</span> <span class="hljs-title class_">State</span>(next, nextDis));<br>            &#125;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> disTo;<br>&#125;<br><br><br></code></pre></td></tr></table></figure><h3 id="常见"><a href="#常见" class="headerlink" title="常见"></a>常见</h3><ul><li>LRU</li><li>LFU</li></ul><h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2>]]></content>
+    
+    
+    <categories>
+      
+      <category>datastructure</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>datastructure</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Redis</title>
+    <link href="/2022/05/13/program/database/Redis/"/>
+    <url>/2022/05/13/program/database/Redis/</url>
+    
+    <content type="html"><![CDATA[<h2 id="基础架构"><a href="#基础架构" class="headerlink" title="基础架构"></a>基础架构</h2><ul><li>1.访问框架<ul><li>socket 网络访问</li><li>请求解析</li></ul></li><li>2.操作模块<ul><li>基于不同类型 value 的操作模块</li></ul></li><li>3.索引模块</li><li>4.存储模块<ul><li>持久化模块: RDB, AOF</li><li>分配器</li></ul></li><li>5.高可用集群支撑模块<ul><li>主从复制</li><li>哨兵机制</li></ul></li><li>5.高可扩展集群支撑模块<ul><li>数据分片</li></ul></li></ul><h2 id="线程模型"><a href="#线程模型" class="headerlink" title="线程模型"></a>线程模型</h2><ul><li>Redis 在处理网络请求是使用单线程模型，并通过 IO 多路复用来提高并发。但是在其他模块，比如：持久化，会使用多个线程。</li><li>文件事件处理器: 采用 IO 多路复用机制同时监听多个 socket<ul><li>多个 socket</li><li>IO 多路复用程序</li><li>文件事件分派器</li><li>事件处理器（连接应答处理器、命令请求处理器、命令回复处理器）</li></ul></li><li>为啥 Redis 单线程模型也能效率这么高？<ul><li>纯内存操作</li><li>核心是基于非阻塞的 IO 多路复用机制</li><li>单线程反而避免了多线程的频繁上下文切换问题</li></ul></li></ul><h2 id="持久化"><a href="#持久化" class="headerlink" title="持久化"></a>持久化</h2><h3 id="RDB"><a href="#RDB" class="headerlink" title="RDB"></a>RDB</h3><ul><li>fork 子进程生成数据快照,&gt;&#x3D;5min 一次</li><li>宕机重启会丢失最近 5 分钟的数据。</li><li>如果数据文件特别大，可能会导致对客户端提供的服务暂停数毫秒，或者甚至数秒。</li></ul><h3 id="AOF"><a href="#AOF" class="headerlink" title="AOF"></a>AOF</h3><ul><li>以 append-only 的模式写入一个日志文件中，在 Redis 重启的时候，可以通过回放 AOF 日志中的写入指令来重新构建整个数据集</li><li>AOF 会每隔 1 秒，通过一个后台线程执行一次 fsync 操作，最多丢失 1 秒钟的数据。</li><li>AOF 日志文件以 append-only 模式写入，所以没有任何磁盘寻址的开销，写入性能非常高，而且文件不容易破损，即使文件尾部破损，也很容易修复。</li><li>AOF 日志文件的命令通过非常可读的方式进行记录，这个特性非常 适合做灾难性的误删除的紧急恢复。</li><li>AOF 开启后，支持的写 QPS 会比 RDB 支持的写 QPS 低</li></ul><h3 id="RDB-和-AOF-到底该如何选择"><a href="#RDB-和-AOF-到底该如何选择" class="headerlink" title="RDB 和 AOF 到底该如何选择"></a>RDB 和 AOF 到底该如何选择</h3><ul><li>不要仅仅使用 RDB，因为那样会导致你丢失很多数据；</li><li>也不要仅仅使用 AOF，因为那样有两个问题：第一，你通过 AOF 做冷备，没有 RDB 做冷备来的恢复速度更快；第二，RDB 每次简单粗暴生成数据快照，更加健壮，可以避免 AOF 这种复杂的备份和恢复机制的 bug；</li><li>Redis 支持同时开启开启两种持久化方式，我们可以综合使用 AOF 和 RDB 两种持久化机制，用 AOF 来保证数据不丢失，作为数据恢复的第一选择; 用 RDB 来做不同程度的冷备，在 AOF 文件都丢失或损坏不可用的时候，还可以使用 RDB 来进行快速的数据恢复。</li></ul><h3 id="一致性哈希算法"><a href="#一致性哈希算法" class="headerlink" title="一致性哈希算法"></a>一致性哈希算法</h3><ul><li>一致哈希 是一种特殊的哈希算法。在使用一致哈希算法后，哈希表槽位数（大小）的改变平均只需要对 K&#x2F;n 个关键字重新映射，其中 K 是关键字的数量，n 是槽位数量。然而在传统的哈希表中，添加或删除一个槽位的几乎需要对所有关键字进行重新映射。</li><li>一致哈希也可用于实现健壮缓存来减少大型 Web 应用中系统部分失效带来的负面影响</li><li>需求: 当增加或减少一台缓存服务器时尽可能减少资源 hash 映射变化</li><li>实现<ul><li>一致哈希将每个对象映射到圆环边上的一个点，系统再将可用的节点机器映射到圆环的不同位置。查找某个对象对应的机器时，需要用一致哈希算法计算得到对象对应圆环边上位置，沿着圆环边上查找直到遇到某个节点机器，这台机器即为对象应该保存的位置。</li><li>当删除一台节点机器时，这台机器上保存的所有对象都要移动到下一台机器。添加一台机器到圆环边上某个点时，这个点的下一台机器需要将这个节点前对应的对象移动到新机器上。更改对象在节点机器上的分布可以通过调整节点机器的位置来实现。</li></ul></li><li>哈希算法对比<ul><li>普通哈希算法: 使用 MD5 算法,分布均匀,但该算法使用节点数取余的方法，强依赖 node 的数目,node 数量变化时需要大量数据迁移</li><li>一致性哈希: 解决了节点变化导致的数据迁移问题，但是，数据项分布的均匀性很差。</li><li>改进 – 虚节点: 通过增加虚节点的方法，使得每个节点在环上所“管辖”更加均匀。这样就既保证了在节点变化时，尽可能小的影响数据分布的变化，而同时又保证了数据分布的均匀。</li></ul></li></ul><h2 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h2><ul><li>redis 的跳表知道吗，为什么不用红黑树</li><li>Redis hash、zset 数据结构？跳表是怎么构建的？</li></ul><h3 id="支持的类型"><a href="#支持的类型" class="headerlink" title="支持的类型"></a>支持的类型</h3><ul><li>String<ul><li>SDS(简单动态字符串)</li></ul></li><li>List<ul><li>双向链表</li><li>压缩列表</li></ul></li><li>Hash<ul><li>压缩列表</li><li>哈希表</li></ul></li><li>Set<ul><li>哈希表</li><li>整数数组</li></ul></li><li>Sorted Set<ul><li>压缩列表</li><li>跳表</li></ul></li></ul><h3 id="底层数据结构"><a href="#底层数据结构" class="headerlink" title="底层数据结构"></a>底层数据结构</h3><ul><li>简单动态字符串(SDS)</li><li>双向链表<ul><li>查找 O(N),修改 O(1)</li></ul></li><li>整数数组<ul><li>查找 O(1),修改 O(N)</li></ul></li><li>哈希表<ul><li>查找 O(1),修改 O(1)</li></ul></li><li>压缩列表<ul><li>压缩列表在表头有三个字段 zlbytes、zltail 和 zllen，分别表示列表长度、列表尾的偏移量和列表中的 entry 个数；压缩列表在表尾还有一个 zlend，表示列表结束。</li><li>查找头尾 O(1),其他 O(N)</li></ul></li><li>跳表<ul><li>跳表在链表的基础上，增加了多级索引，通过索引位置的几个跳转，实现数据的快速定位</li><li>查找 O(logN)</li></ul></li></ul><h3 id="键和值用什么结构组织？"><a href="#键和值用什么结构组织？" class="headerlink" title="键和值用什么结构组织？"></a>键和值用什么结构组织？</h3><ul><li>全局哈希表,查找 O(1)</li><li>哈希冲突<ul><li>链表存储,查找 O(N)</li></ul></li><li>rehash<ul><li>使用两个全局哈希表：哈希表 1 和哈希表 2<ul><li>1.给哈希表 2 分配更大的空间，例如是当前哈希表 1 大小的两倍；</li><li>2.把哈希表 1 中的数据重新映射并拷贝到哈希表 2 中；</li><li>3.释放哈希表 1 的空间。</li></ul></li></ul></li><li>渐进式 rehash<ul><li>第二步拷贝数据时，Redis 仍然正常处理客户端请求，每处理一个请求时，从哈希表 1 中的第一个索引位置开始，顺带着将这个索引位置上的所有 entries 拷贝到哈希表 2 中；等处理下一个请求时，再顺带拷贝哈希表 1 中的下一个索引位置的 entries</li><li>渐进式 rehash 时对 value 的增删改查都会在两个哈希表上执行，所以才能保证数据不会出错，比如查询操作会先查哈希表 1,查不到再查哈希表 2。其他类似。</li></ul></li></ul><h2 id="淘汰策略"><a href="#淘汰策略" class="headerlink" title="淘汰策略"></a>淘汰策略</h2><ul><li>LRU</li><li>LFU</li></ul><h2 id="集群"><a href="#集群" class="headerlink" title="集群"></a>集群</h2><ul><li>redis 集群是怎么实现的，说一下一致性 hash</li><li>Redis Cluster？其他开源集群方案？</li><li>Redis Cluster 是如何进行扩容的？</li></ul><h3 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h3><ul><li>一主多从，主负责写，并且将数据复制到其它的 Slave 节点，从节点负责读。</li><li>Redis 默认采用异步方式复制数据到 Slave Node，同时 Slave Node 会周期性地确认自己每次复制的数据量<ul><li>网络通畅: Master 会持续向 Slave 推送命令</li><li>网络问题、超时等中断: slave 尝试部分同步（partial resynchronization）</li><li>当部分同步不可用时，Slave 会请求全量同步</li></ul></li></ul><h3 id="哨兵-Sentinel"><a href="#哨兵-Sentinel" class="headerlink" title="哨兵 Sentinel"></a>哨兵 Sentinel</h3><ul><li>集群监控：负责监控 Redis Master 和 Slave 进程是否正常工作。</li><li>消息通知：如果某个 Redis 实例有故障，那么哨兵负责发送消息作为报警通知给管理员。</li><li>故障转移：如果 Master node 挂掉了，会自动转移到 Slave node 上。</li><li>配置中心：如果故障转移发生了，通知 client 客户端新的 Master 地址。</li><li>核心知识<ul><li>哨兵至少需要 3 个实例，来保证自己的健壮性。</li><li>哨兵 + Redis 主从的部署架构，是 不保证数据零丢失 的，只能保证 Redis 集群的高可用性。</li><li>对于哨兵 + Redis 主从这种复杂的部署架构，尽量在测试环境和生产环境，都进行充足的测试和演练。</li><li>哨兵的个数与集群节点个数无关，每个哨兵都会 Check 所有节点</li><li>当启用哨兵后，客户端的连接是通过哨兵连接到 Node 的</li></ul></li><li>Slave 选主算法<ul><li>按照 Slave 优先级进行排序，Slave Priority 越低，优先级就越高。</li><li>如果 Slave Priority 相同，那么看 Replica Offset，哪个 Slave 复制了越多的数据，Offset 越靠后，优先级就越高。</li><li>如果上面两个条件都相同，那么选择一个 run id 比较小的那个 Slave。</li></ul></li></ul><h3 id="Redis-Cluster"><a href="#Redis-Cluster" class="headerlink" title="Redis Cluster"></a>Redis Cluster</h3><ul><li>Redis Cluster 是一种服务器 Sharding 技术，提供内置的高可用支持,集成了 主从复制 和 哨兵 的功能<ul><li>高性能：在 Cluster 集群中没有代理，主从之间使用异步复制，并且不会对 Key 进行合并操作；</li><li>可接受的写入安全：当客户端连接到 majority master 时集群尽最大努力保留所有客户端的写操作。</li><li>可用性：NODE_TIMEOUT 时间后进行故障转移;副本迁移（replicas migration），当 master 没有 slave 时，可从其他 master 下重新分配一个 slave</li></ul></li><li>内部节点通信<ul><li>Cluster Bus</li><li>Redis 维护集群元数据采用 gossip 协议，所有节点都持有一份元数据，不同的节点如果出现了元数据的变更，就不断将元数据发送给其它的节点，让其它节点也进行元数据的变更。<ul><li>优点: 更新分散</li><li>缺点: 元数据的更新有延时</li></ul></li></ul></li><li>寻址算法<ul><li>Redis Cluster 有固定的 16384 个 Hash Slot，对每个 key 计算 CRC16 值，然后对 16384 取模，可以获取 key 对应的 Hash Slot。</li><li>Keys hash tags 可以破坏上述的分配规则，Hash tags 是一种保证多个键被分配到同一个槽位的方法。</li></ul></li><li>重定向<ul><li>MOVED: 请求的 slot 永久的由另一个节点提供服务</li><li>ASK: 仅代表将当前查询重定向到指定节点，不影响后续查询。(在 Redis Cluster 迁移的时候会用到 ASK 重定向)</li><li>Redis Cluster 的迁移是以槽位单位的，一个槽位从节点 A 迁移到节点 B 需要经过以下步骤：<ul><li>1.节点 A 将待迁移 slot 设置为 MIGRATING 状态，将 B 节点 slot 设置为 IMPORTING 状态</li><li>2.A 获取 slot 中的 key，逐个调用 MIGRATE 命令</li><li>3.MIGRATE 会将特定的 key 从 A 迁移到 B，这个过程是原子操作（A、B 均会进行加锁）</li></ul></li></ul></li><li>容错能力<ul><li>判断心跳: header + gossip 消息</li></ul></li><li>故障检测:<ul><li>NODE flags 标识: 不可达 -&gt; PFAIL -&gt; FAIL -&gt; 可达 -&gt; 清除 NODE flags</li></ul></li></ul><h2 id="分布式锁"><a href="#分布式锁" class="headerlink" title="分布式锁"></a>分布式锁</h2><ul><li>数据库实现</li><li>ZooKeeper 实现</li><li>Redis 实现</li></ul><h2 id="缓存"><a href="#缓存" class="headerlink" title="缓存"></a>缓存</h2><h3 id="缓存击穿"><a href="#缓存击穿" class="headerlink" title="缓存击穿"></a>缓存击穿</h3><h3 id="缓存穿透"><a href="#缓存穿透" class="headerlink" title="缓存穿透"></a>缓存穿透</h3><h3 id="缓存雪崩"><a href="#缓存雪崩" class="headerlink" title="缓存雪崩"></a>缓存雪崩</h3><ul><li>redis setnx + expire 有什么缺点，如何优化</li><li>并发修改数据库并回写 Redis 如何保证数据一致性？</li><li>Redis 线程模型？持久化方案？</li></ul><h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote><ul><li><a href=""></a></li><li><a href=""></a></li></ul></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>database</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>redis</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>MySQL</title>
+    <link href="/2022/05/13/program/database/MySQL/"/>
+    <url>/2022/05/13/program/database/MySQL/</url>
+    
+    <content type="html"><![CDATA[<h2 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h2><h3 id="服务层-存储引擎层"><a href="#服务层-存储引擎层" class="headerlink" title="服务层 + 存储引擎层"></a>服务层 + 存储引擎层</h3><ul><li>一条查询 sql 的执行过程<ul><li>客户端发出查询命令</li><li>连接器: 连接管理,权限验证</li><li>查询缓存: 可选择开启,开启后先查询缓存(MySQL8.0 版本直接将查询缓存的整块功能删掉了).在一个表上有更新的时候，跟这个表有关的查询缓存会失效，所以这条语句就会把表 T 上所有缓存结果都清空</li><li>分析器: 词法分析,语法分析</li><li>优化器: 执行计划生成,索引选择</li><li>执行器: 操作引擎,返回结果</li><li>存储引擎: 保存数据,提供读写接口</li></ul></li></ul><h3 id="redo-log（重做日志）和-binlog（归档日志）"><a href="#redo-log（重做日志）和-binlog（归档日志）" class="headerlink" title="redo log（重做日志）和 binlog（归档日志）"></a>redo log（重做日志）和 binlog（归档日志）</h3><ul><li>WAL<ul><li>写内存，再写日志（redo log）。定时或在某些情况（日志写满时）将内存数据批量刷到磁盘。</li></ul></li><li>Redo Log<ul><li>写 Log 过程<ul><li>写 redo buffer 内存</li><li>根据 innodb_flush_log_at_trx_commit 参数配置（1 表示事务提交后同步 redo log 到磁盘，可以保证事务的持久性，其他配置无法保证）将 redo buffer 内容顺序写入 redo log 文件</li><li>redo log 文件大小固定，循环顺序擦写</li></ul></li><li>记录物理页更改（“在某个数据页上做了什么修改”）</li><li>Innodb 独有</li><li>crash-safe（由两阶段提交保证）</li></ul></li><li>Bin Log<ul><li>归档日志（原始 SQL 语句）</li><li>Server 层的能力</li></ul></li><li>两阶段提交（保证数据库一致性）<ul><li>过程：写 redo log，prepare（引擎）-》写 bin log 得到 xid（server）-》提交事务，commit（引擎）</li><li>数据恢复：bin log 中有 xid 的记录恢复，其中 redo log 记录处于 prepare 状态的自动提交。</li><li>数据回滚：bin log 中没有 xid 的回滚。</li></ul></li><li>Mysql 参数<ul><li>innodb_flush_log_at_trx_commit 1 表示事务提交后同步 redo log 到磁盘</li><li>sync_binlog 1 表示事务提交后同步 bin log 到磁盘</li></ul></li></ul><h2 id="隔离级别"><a href="#隔离级别" class="headerlink" title="隔离级别"></a>隔离级别</h2><h3 id="事务-4-种隔离级别（原理）"><a href="#事务-4-种隔离级别（原理）" class="headerlink" title="事务 4 种隔离级别（原理）"></a>事务 4 种隔离级别（原理）</h3><ul><li>RU 读未提交（最近记录）</li><li>RC 读已提交（MVCC）</li><li>RR 可重复读（MVCC）</li><li>S 串行化（锁）</li></ul><h3 id="MVCC"><a href="#MVCC" class="headerlink" title="MVCC"></a>MVCC</h3><ul><li>优点：写写互斥、读写不互斥</li><li>实现：<ul><li>原理：根据当前的 Read View 信息在事务回滚链中一直往前找，直到找到合适的记录</li></ul></li><li>隐藏列：聚簇索引中的隐藏字段<ul><li>trx_id：当前行最近被那个事务改变</li><li>roll_pointer：当前行旧版本在 undo log 位置的指针</li></ul></li><li>Read View：当前未提交事务的视图<ul><li>创建时机：<ul><li>RC：每次读语句开始前新建</li><li>RR：当前事务开始前创建</li></ul></li><li>内容：<ul><li>m_ids：当前活跃的读写事务 id 列表</li><li>min_trx_id：m_ids 中的最小值</li><li>max_trx_id：m_ids 中的最大值</li><li>creator_trx_id：当前事务 id</li></ul></li></ul></li><li>Undo Log：事务回滚链路<ul><li>单条记录内容：<ul><li>变更结果</li><li>trx_id：执行变更的事务 id</li><li>roll_pointer：回滚指针</li></ul></li><li>记录删除时机<ul><li>不被需要时（记录的 trx_id 小于满足所有 Read View 要求的最小 min_trx_id）</li></ul></li></ul></li><li>合适记录的 trx_id 标准<ul><li>&#x3D; creator_trx_id</li><li>&lt; min_trx_id</li><li>between min_trx_id and max_trx_id and not in m_ids</li></ul></li></ul><h3 id="事务创建方式"><a href="#事务创建方式" class="headerlink" title="事务创建方式"></a>事务创建方式</h3><ul><li>set autocommit&#x3D;1、begin、commit work and chain、commit、rollback</li><li>set autocommit&#x3D;0、begin、commit、rollback</li></ul><h3 id="长事务"><a href="#长事务" class="headerlink" title="长事务"></a>长事务</h3><ul><li>危害：undo log 文件过大、回滚段过长、锁占用过长</li><li>排查：information_schema.innodb_trx 表</li></ul><h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h3 id="提高读写效率的数据结构"><a href="#提高读写效率的数据结构" class="headerlink" title="提高读写效率的数据结构"></a>提高读写效率的数据结构</h3><ul><li>哈希表<ul><li>键-值（key-value）存储数据的结构,hash 冲突拉链解决</li><li>优点: 等值增删改查快</li><li>缺点: 不是有序的,区间查询慢</li><li>适用于只有等值查询的场景，比如 Memcached 及其他一些 NoSQL 引擎</li></ul></li><li>有序数组<ul><li>优点: 查询,修改快(等值,区间)</li><li>缺点: 插入删除慢</li><li>只适用于静态存储引擎</li></ul></li><li>搜索树<ul><li>影响因素：树高，数据磁盘密度（n 叉树）</li><li>优点: 读写均衡,TC&#x3D;O(logN)</li></ul></li><li>其他<ul><li>跳表</li><li>LSM 树</li></ul></li></ul><h3 id="InnoDB-的索引模型"><a href="#InnoDB-的索引模型" class="headerlink" title="InnoDB 的索引模型"></a>InnoDB 的索引模型</h3><ul><li>表都是根据主键顺序以索引的形式存放的，这种存储方式的表称为索引组织表.每一个索引在 InnoDB 里面对应一棵 B+树。</li><li>文中“以 InnoDB 的一个整数字段索引为例，这个 N 差不多是 1200。”—猜测这个 1200 计算方式是，innodb 默认页大小是 16kb，而一个页可以存放记录也可以存放索引+指针，索引类型为 bigint，占用 8 字节，指针默认是 6 字节。16k&#x2F;(8+6)&#x3D;1170</li><li>索引类型<ul><li>主键索引,也被称为聚簇索引（clustered index）,叶子节点存的是整行数据</li><li>非主键索引,也被称为二级索引（secondary index）,叶子节点内容是主键的值,查询非索引字段需要回表(搜索两棵 B+树)</li></ul></li><li>索引维护<ul><li>页分裂: 影响性能,降低空间利用率</li><li>页合并</li><li>自增主键:<ul><li>优点: 有序插入,性能好,不会触发页分裂;存储空间占用小(int-4 字节,bigint-8 字节)</li></ul></li></ul></li><li>联合索引<ul><li>覆盖索引: 查询索引树中保存的字段(索引+主键)</li><li>最左前缀原则</li><li>索引下推: MySQL 5.6 引入的索引下推优化（index condition pushdown)， 可以在索引遍历过程中，对索引中包含的字段先做判断，直接过滤掉不满足条件的记录，减少回表次数。</li></ul></li><li>普通索引和唯一索引，应该怎么选择？<ul><li>查询过程: 基本一致</li><li>更新过程: 普通索引可以使用 change buffer,减少了随机磁盘访问，所以对更新性能的提升是会很明显的</li><li>结论: 尽量使用普通索引</li></ul></li><li>change buffer 的使用场景<ul><li>写多读少类系统</li><li>对比 redo log: redo log 主要节省的是随机写磁盘的 IO 消耗（转成顺序写），而 change buffer 主要节省的则是随机读磁盘的 IO 消耗。</li></ul></li><li>怎么给字符串加索引?<ul><li>空间和时间的权衡</li><li>1.完整索引:<ul><li>优点: 扫描行数少,可使用覆盖索引</li><li>缺点: 占用更多空间</li></ul></li><li>2.前缀索引<ul><li>优点:节省空间;</li><li>缺点:增加扫描行数,无法使用覆盖索引</li><li>保证区分度尽可能高的前提下(&gt;95%),长度尽可能短</li></ul></li><li>2.其他方式:<ul><li>倒序存储</li><li>hash 字段</li><li>相同点: 只支持等值查询,不支持范围查询</li><li>区别:<ul><li>存储空间: 差不多</li><li>CPU 消耗: hash &gt; 倒序</li><li>查询效率: hash 更稳定,扫描行数 &lt; 倒序</li></ul></li></ul></li></ul></li></ul><h3 id="选错索引怎么解决"><a href="#选错索引怎么解决" class="headerlink" title="选错索引怎么解决?"></a>选错索引怎么解决?</h3><ul><li>show index 查看索引基数 cardinality,基数越大，索引的区分度越好。<ul><li>抽样统计: 选择 N 个数据页,当变更的数据行数超过 1&#x2F;M 的时候，会自动触发重新做一次索引统计。</li></ul></li><li>扫描行数,explain 查看</li><li>1.索引统计信息不准确: 用 analyze table 来解决</li><li>2.优化器误判:<ul><li>1)force index;</li><li>2)改写 sql;</li><li>3)增加或者删除索引</li></ul></li></ul><h3 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h3><ul><li><p>按加锁范围划分: 全局锁,表级锁,行锁</p></li><li><p>1.全局锁: Flush tables with read lock (FTWRL),保证读取时数据的一致性。</p></li><li><p>保证读一致性的方法</p><ul><li>全局锁（Mysql 层面提供）</li><li>可重复读（Innodb 提供）</li><li>set global readonly&#x3D;true（Mysql 层面提供）</li></ul></li><li><p>2.表级锁</p><ul><li>表锁:<ul><li>加锁方式：lock table xxx read&#x2F;write（加读锁或写锁）</li><li>解锁方式：unlock tables xxx</li><li>加锁影响：<ul><li>读锁：当前线程：只读，其他线程：只读</li><li>写锁：当前线程：读写，其他线程：无法操作</li></ul></li></ul></li><li>元数据锁（meta data lock，MDL): MySQL 5.5 引入<ul><li>加锁方式：自动加，DML 语句加 MDL 读锁，DDL 加 MDL 写锁</li><li>释放：DML 语句事务结束时释放 MDL 读锁</li><li>注意: 可能锁表,建议使用 DDL NOWAIT&#x2F;WAIT n 语法</li></ul></li></ul></li><li><p>3.Innodb 行锁</p><ul><li>加锁时间：单行读写时</li><li>解锁时间：事务提交之后（两阶段锁协议）</li></ul></li><li><p>行锁的优化</p><ul><li>减少加锁时间（锁冲突操作在事务中越晚执行越好）</li><li>减小锁的粒度（将容易发生行锁冲突的行 变为 多行，用多行表示一行）</li></ul></li><li><p>行锁死锁</p><ul><li>原因：不同事务对锁出现循环依赖</li><li>解决办法：<ul><li>死锁检测（银行家算法），复杂度 O（n），对应 Mysql 配置 innodb_deadlock_detect，默认为 on</li><li>锁等待超时，超时后将本事务回滚，释放已有锁资源。缺点：等待时间设置多短容易误伤正常等待事务。对应 Mysql 配置的 innodb_lock_wait_timeout 配置</li></ul></li></ul></li><li><p>高并发场景下的死锁检测导致 CPU 负载高、事务并发量低</p><ul><li>解决办法<ul><li>应用中做并发控制、减少死锁检测算法耗时</li><li>表结构设计中减小锁的粒度</li></ul></li></ul></li><li><p>RR 事务视图可见性判断</p><ul><li>版本未提交，不可见；</li><li>版本已提交，但是是在视图创建后提交的，不可见；</li><li>版本已提交，而且是在视图创建前提交的，可见。</li></ul></li><li><p>更新数据都是先读后写的，而这个读，只能读当前的值，称为“当前读”（current read）</p></li><li><p>B 树和 B+树的区别,为什么 mysql 要用 B+树,mongodb 要用 B 树</p></li></ul><h2 id="锁-1"><a href="#锁-1" class="headerlink" title="锁"></a>锁</h2><ul><li>共享锁,排它锁</li><li>记录锁,间隙锁,临键锁</li></ul><h2 id="慢查询排查"><a href="#慢查询排查" class="headerlink" title="慢查询排查"></a>慢查询排查</h2><h3 id="性能抖动"><a href="#性能抖动" class="headerlink" title="性能抖动"></a>性能抖动</h3><ul><li>一个查询要淘汰的脏页个数太多，会导致查询的响应时间明显变长</li><li>redo log 写满,要 flush 脏页,会阻塞所有更新操作</li><li>解决方案: 刷脏页的控制策略</li></ul><h3 id="内存页-Page"><a href="#内存页-Page" class="headerlink" title="内存页 Page"></a>内存页 Page</h3><ul><li>三种状态:<ul><li>第一种是，还没有使用的；</li><li>第二种是，使用了并且是干净页；</li><li>第三种是，使用了并且是脏页(内存数据页跟磁盘数据页内容不一致)</li></ul></li><li>刷脏页: 内存数据写入到磁盘<ul><li>触发时机:<ul><li>后台线程自动 flush</li><li>数据页淘汰而触发 flush</li></ul></li><li>控制策略<ul><li>innodb_io_capacity: 告诉 InnoDB 你的磁盘能力</li><li>innodb_max_dirty_pages_pct: 脏页比例上限，默认值是 75%</li><li>innodb_flush_neighbors: 是否刷相邻的脏页,对机械硬盘有意义,ssd 不需要,8.0 后默认为 0</li></ul></li></ul></li></ul><h2 id="表数据删除"><a href="#表数据删除" class="headerlink" title="表数据删除"></a>表数据删除</h2><h3 id="数据存储"><a href="#数据存储" class="headerlink" title="数据存储"></a>数据存储</h3><h3 id="只查询一行"><a href="#只查询一行" class="headerlink" title="只查询一行"></a>只查询一行</h3><ul><li>1.查询长时间不返回<ul><li>等 MDL 锁,show processlist 查看, select blocking_pid from sys.schema_table_lock_waits,找到 process id 直接 kill</li><li>等 flush</li><li>等行锁,当前读会被写锁堵住,MySQL 5.7 版本，可以通过 sys.innodb_lock_waits 表查到。</li></ul></li><li>2.查询慢<ul><li>没索引,扫描行数多,查询慢</li><li>一致性读时,视图版本过多,导致需通过 undo log 回溯数据</li></ul></li></ul><h2 id="集群"><a href="#集群" class="headerlink" title="集群"></a>集群</h2><h3 id="垂直拆分"><a href="#垂直拆分" class="headerlink" title="垂直拆分"></a>垂直拆分</h3><ul><li>垂直分表: 也就是大表拆小表，基于列字段进行的。</li><li>垂直分库: 针对的是一个系统中的不同业务进行拆分。</li></ul><h3 id="水平拆分"><a href="#水平拆分" class="headerlink" title="水平拆分"></a>水平拆分</h3><ul><li>离散映射：如 mod 或 dayofweek ， 这种类型的映射能够很好的解决热点问题，但带来了数据迁移和历史数据问题。</li><li>连续映射；如按 id 或 gmt_create_time 的连续范围做映射。这种类型的映射可以避免数据迁移，但又带来热点问题。</li></ul><h3 id="分库分表规则的设计和配置，长远说来必须满足以下要求"><a href="#分库分表规则的设计和配置，长远说来必须满足以下要求" class="headerlink" title="分库分表规则的设计和配置，长远说来必须满足以下要求"></a>分库分表规则的设计和配置，长远说来必须满足以下要求</h3><ul><li>可以动态推送修改</li><li>规则可以分层级叠加，旧规则可以在新规则下继续使用，新规则是旧规则在更宽尺度上的拓展，以此支持新旧规则的兼容，避免数据迁移</li><li>用 mod 方式时，最好选 2 的指数级倍分库分表，这样方便以后切割。</li></ul><h3 id="数据迁移"><a href="#数据迁移" class="headerlink" title="数据迁移"></a>数据迁移</h3><ul><li>停机迁移 是最简单、最安全、最快速的迁移方案，但一般线上业务系统很少允许停机迁移。</li><li>双写迁移 方案就是同时写两个库，一个是老库，一个是新库。<ul><li>1.导入历史数据，数据库双写（事务成功以老数据源为准），查询走老数据源，通过定时任务补全新老差异数据</li><li>2.新老数据无差异，依旧双写（事务成功以新数据源为准），查询走新数据源</li><li>3.稳定运行无误后，下线老数据源</li></ul></li></ul><h3 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h3><ul><li>MySQL 主从复制涉及到三个线程，一个运行在主节点（log dump thread），其余两个(I&#x2F;O thread, SQL thread)运行在从节点。<ul><li>Log Dump Thread：当从节点连接主节点时，主节点会创建一个 log dump 线程，用于发送 bin-log 的内容。</li><li>I&#x2F;O Thread：当从节点上执行 start slave 命令之后，从节点会创建一个 I&#x2F;O 线程用来连接主节点，请求主库中更新的 bin-log。I&#x2F;O 线程接收到主节点 binlog dump 进程发来的更新之后，保存在本地 relay-log 中。</li><li>SQL Thread：负责读取 relay log 中的内容，解析成具体的操作并执行，最终保证主从数据的一致性。</li></ul></li></ul><h3 id="同步模式"><a href="#同步模式" class="headerlink" title="同步模式"></a>同步模式</h3><ul><li>异步模式（mysql async-mode）：MySQL 增删改操作会全部记录在 binary log 中，当 slave 节点连接 master 时，会主动从 master 处获取最新的 bin log 文件。</li><li>半同步模式(mysql semi-sync)：这种模式下主节点只需要接收到其中一台从节点的返回信息，就会 commit</li><li>全同步模式 是指主节点和从节点全部执行了 commit 并确认才会向客户端返回成功。</li></ul><h3 id="主从复制的延迟问题"><a href="#主从复制的延迟问题" class="headerlink" title="主从复制的延迟问题"></a>主从复制的延迟问题</h3><ul><li>优化主从节点之间的网络延迟</li><li>降低 master 负载，以减少 TPS</li><li>降低 slave 负载，slave 只做备份使用，不提供服务</li><li>调整 slave 参数：关闭 slave bin-log 等</li><li>多线程的主从复制：不同 schema 下的表并发提交时的数据不会相互影响，即 slave 节点可以用对 relay log 中不同的 schema 各分配一个 SQL Thread，来重放 relay log 中主库已经提交的事务</li></ul><h3 id="全局-ID"><a href="#全局-ID" class="headerlink" title="全局 ID"></a>全局 ID</h3><ul><li>数据库自增 id</li><li>设置数据库 sequence 或者表自增字段步长</li><li>UUID</li><li>Snowflake 算法<ul><li>|–1 位符号位–|–41 位时间戳–|–10 位机器 ID–|–12 位序列号–|</li><li>问题:<ul><li>时间的准确度问题: 每当进行 NTP 时间校准时，你的机器时间总会向后 回拨 一段时间，这时悲剧就来了：有极大可能性生成重复 ID。</li></ul></li><li>改进:<ul><li>时间戳由毫秒变为秒</li><li>使用环形列表对时间戳对应的序列进行缓存<ul><li>将时间戳改为秒为单位，同时可以把省出来的位交给序列。此时缓存一个小时的数据（即可以容忍一个小时的时钟回拨）也就只需要缓存 3600 个序列</li><li>改进后的 Snowflake 生成的 ID 是这样组成的：|–1 位符号位–|–32 位时间戳–|–10 位机器 ID–|–21 位序列号–|</li></ul></li><li>使用 CAS 操作避免大粒度悲观锁</li></ul></li></ul></li></ul><h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote><ul><li><a href=""></a></li><li><a href=""></a></li></ul></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>database</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>MySQL</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>eclipse application</title>
+    <link href="/2022/05/13/program/eclipse/eclipse-application/"/>
+    <url>/2022/05/13/program/eclipse/eclipse-application/</url>
+    
+    <content type="html"><![CDATA[<h2 id="1-项目结构"><a href="#1-项目结构" class="headerlink" title="1.项目结构"></a>1.项目结构</h2><h3 id="application-model"><a href="#application-model" class="headerlink" title="application model"></a>application model</h3><p>This model contains the parts of the application as individual model elements and their hierarchical relationship.</p><ul><li><p>windows</p></li><li><p>parts</p><ul><li>views</li><li>editors</li></ul></li><li><p>menus</p></li><li><p>toolbars</p></li><li><p>handlers</p></li><li><p>commands</p></li><li><p>key bindings</p></li><li><p>has attributes which describe its current state</p></li><li><p>contains links to Java classes or static resources</p><ul><li>java classes: bundleclass:&#x2F;&#x2F;test&#x2F;test.parts.MySavePart</li><li>static resources: platform:&#x2F;plugin&#x2F;com.example.plugin&#x2F;icons&#x2F;save_edit.gif</li></ul></li><li><p>The application model is extensible, e.g., other plug-ins can contribute to it via model processors and model fragments.</p></li></ul><h3 id="overview-of-the-model-objects"><a href="#overview-of-the-model-objects" class="headerlink" title="overview of the model objects"></a>overview of the model objects</h3><ul><li>application: MApplication<ul><li>Describes the application object. All other model elements are contained in this object.</li></ul></li><li>window<ul><li>MWindow</li><li>MTrimmedWindow: can contain trimbars (which can hold toolbars).</li></ul></li><li>parts: MPart<ul><li>Parts can be stacked or positioned next to each other depending on the container into which they are dropped.</li><li>A part can have a drop-down menu, context menus and a toolbar.</li><li>Parts can be classified as views and editors.<ul><li>views: display and modify a set of data. change data don’t need to explicitly save the editor content</li><li>editors: modify a single data element. change data has to explicitly save the editor content</li></ul></li></ul></li><li>parts containers<ul><li>Part Stack: A part stack arranges its children similar to a browser</li><li>Part Sash Container: displays all its children at the same time either horizontally or vertically aligned.</li></ul></li><li>perspective<ul><li>A perspective is an optional container for other part containers and parts.</li><li>It is presented by MPerspective objects, which must be placed in an MPerspectiveStack object.</li><li>EPartService: Switching perspectives</li></ul></li><li>MAddon: A self-contained component typically without user interface. It can register for events in the application life cycle and handle these events.</li><li>MDirtyable<ul><li>Property of MPart which can be injected. If set to true, this property informs the Eclipse platform that this Part contains unsaved data (is dirty)</li><li>In a handler you can query this property to provide a save possibility.</li></ul></li><li>MPartDescriptor<ul><li>a template for new parts. </li><li>A new part based on this part descriptor can be created and shown via the Eclipse framework.</li></ul></li><li>Snippets<ul><li>Snippets can be used to pre-configure model parts which you want to create via your program.</li></ul></li></ul><h3 id="Extending-the-application-model-from-other-plug-ins"><a href="#Extending-the-application-model-from-other-plug-ins" class="headerlink" title="Extending the application model from other plug-ins"></a>Extending the application model from other plug-ins</h3><ul><li><p>contributions</p><ul><li>Static contributions: text files(fragments or model fragments.)</li><li>Dynamic contributions: java classes(processors or model processors.)</li></ul></li><li><p>model fragments</p><ul><li>A model fragment is a file which typically ends with the .e4xmi extension.</li></ul></li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>ide</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>eclipse</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>leetcode plugin for eclipse</title>
+    <link href="/2022/05/13/program/eclipse/leetcode-plugin/"/>
+    <url>/2022/05/13/program/eclipse/leetcode-plugin/</url>
+    
+    <content type="html"><![CDATA[<h2 id="功能点"><a href="#功能点" class="headerlink" title="功能点"></a>功能点</h2><h3 id="登录-MVP"><a href="#登录-MVP" class="headerlink" title="登录(MVP)"></a>登录(MVP)</h3><ul><li>登入</li><li>登出</li></ul><h3 id="问题列表"><a href="#问题列表" class="headerlink" title="问题列表"></a>问题列表</h3><ul><li>分页列表(MVP)</li><li>筛选条件</li><li>搜索问题</li><li>随机挑选</li></ul><h3 id="问题详情"><a href="#问题详情" class="headerlink" title="问题详情"></a>问题详情</h3><ul><li>问题描述(MVP)</li><li>运行&#x2F;提交(MVP)</li><li>一键生成解题模板(MVP)</li><li>官方题解</li><li>讨论区</li><li>提交历史</li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>ide</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>plugin</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Spring Boot</title>
+    <link href="/2022/05/12/program/java/springBoot/"/>
+    <url>/2022/05/12/program/java/springBoot/</url>
+    
+    <content type="html"><![CDATA[<h2 id="自动配置"><a href="#自动配置" class="headerlink" title="自动配置"></a>自动配置</h2><ul><li>原理是什么?如何实现?</li></ul><h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote><ul><li><a href=""></a></li><li><a href=""></a></li></ul></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>java</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>spring-boot</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Spring</title>
+    <link href="/2022/05/12/program/java/spring/"/>
+    <url>/2022/05/12/program/java/spring/</url>
+    
+    <content type="html"><![CDATA[<h2 id="IOC"><a href="#IOC" class="headerlink" title="IOC"></a>IOC</h2><ul><li>整体设计</li><li>怎么解决循环依赖?</li></ul><h2 id="AOP"><a href="#AOP" class="headerlink" title="AOP"></a>AOP</h2><ul><li>CGLIB</li><li>JDK动态代理</li></ul><h2 id="用到的设计模式"><a href="#用到的设计模式" class="headerlink" title="用到的设计模式"></a>用到的设计模式</h2><h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote><ul><li><a href=""></a></li><li><a href=""></a></li></ul></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>java</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>spring</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  
+</search>

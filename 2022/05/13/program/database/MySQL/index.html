@@ -1,0 +1,1060 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/images/avatar.png">
+  <link rel="icon" href="/images/avatar.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="tsfans">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="架构服务层 + 存储引擎层 一条查询 sql 的执行过程 客户端发出查询命令 连接器: 连接管理,权限验证 查询缓存: 可选择开启,开启后先查询缓存(MySQL8.0 版本直接将查询缓存的整块功能删掉了).在一个表上有更新的时候，跟这个表有关的查询缓存会失效，所以这条语句就会把表 T 上所有缓存结果都清空 分析器: 词法分析,语法分析 优化器: 执行计划生成,索引选择 执行器: 操作引擎,返回结果">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL">
+<meta property="og:url" content="https://tsfans.github.io/2022/05/13/program/database/MySQL/index.html">
+<meta property="og:site_name" content="tsfans&#39;s blog">
+<meta property="og:description" content="架构服务层 + 存储引擎层 一条查询 sql 的执行过程 客户端发出查询命令 连接器: 连接管理,权限验证 查询缓存: 可选择开启,开启后先查询缓存(MySQL8.0 版本直接将查询缓存的整块功能删掉了).在一个表上有更新的时候，跟这个表有关的查询缓存会失效，所以这条语句就会把表 T 上所有缓存结果都清空 分析器: 词法分析,语法分析 优化器: 执行计划生成,索引选择 执行器: 操作引擎,返回结果">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-05-13T00:45:58.000Z">
+<meta property="article:modified_time" content="2024-07-17T12:13:20.776Z">
+<meta property="article:author" content="tsfans">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>MySQL - tsfans&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"tsfans.github.io","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>tsfans&#39; Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/images/banner.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="MySQL"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        tsfans
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-05-13 08:45" pubdate>
+          2022年5月13日 早上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          47 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="busuanzi_container_page_pv" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="busuanzi_value_page_pv"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">MySQL</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h2><h3 id="服务层-存储引擎层"><a href="#服务层-存储引擎层" class="headerlink" title="服务层 + 存储引擎层"></a>服务层 + 存储引擎层</h3><ul>
+<li>一条查询 sql 的执行过程<ul>
+<li>客户端发出查询命令</li>
+<li>连接器: 连接管理,权限验证</li>
+<li>查询缓存: 可选择开启,开启后先查询缓存(MySQL8.0 版本直接将查询缓存的整块功能删掉了).在一个表上有更新的时候，跟这个表有关的查询缓存会失效，所以这条语句就会把表 T 上所有缓存结果都清空</li>
+<li>分析器: 词法分析,语法分析</li>
+<li>优化器: 执行计划生成,索引选择</li>
+<li>执行器: 操作引擎,返回结果</li>
+<li>存储引擎: 保存数据,提供读写接口</li>
+</ul>
+</li>
+</ul>
+<h3 id="redo-log（重做日志）和-binlog（归档日志）"><a href="#redo-log（重做日志）和-binlog（归档日志）" class="headerlink" title="redo log（重做日志）和 binlog（归档日志）"></a>redo log（重做日志）和 binlog（归档日志）</h3><ul>
+<li>WAL<ul>
+<li>写内存，再写日志（redo log）。定时或在某些情况（日志写满时）将内存数据批量刷到磁盘。</li>
+</ul>
+</li>
+<li>Redo Log<ul>
+<li>写 Log 过程<ul>
+<li>写 redo buffer 内存</li>
+<li>根据 innodb_flush_log_at_trx_commit 参数配置（1 表示事务提交后同步 redo log 到磁盘，可以保证事务的持久性，其他配置无法保证）将 redo buffer 内容顺序写入 redo log 文件</li>
+<li>redo log 文件大小固定，循环顺序擦写</li>
+</ul>
+</li>
+<li>记录物理页更改（“在某个数据页上做了什么修改”）</li>
+<li>Innodb 独有</li>
+<li>crash-safe（由两阶段提交保证）</li>
+</ul>
+</li>
+<li>Bin Log<ul>
+<li>归档日志（原始 SQL 语句）</li>
+<li>Server 层的能力</li>
+</ul>
+</li>
+<li>两阶段提交（保证数据库一致性）<ul>
+<li>过程：写 redo log，prepare（引擎）-》写 bin log 得到 xid（server）-》提交事务，commit（引擎）</li>
+<li>数据恢复：bin log 中有 xid 的记录恢复，其中 redo log 记录处于 prepare 状态的自动提交。</li>
+<li>数据回滚：bin log 中没有 xid 的回滚。</li>
+</ul>
+</li>
+<li>Mysql 参数<ul>
+<li>innodb_flush_log_at_trx_commit 1 表示事务提交后同步 redo log 到磁盘</li>
+<li>sync_binlog 1 表示事务提交后同步 bin log 到磁盘</li>
+</ul>
+</li>
+</ul>
+<h2 id="隔离级别"><a href="#隔离级别" class="headerlink" title="隔离级别"></a>隔离级别</h2><h3 id="事务-4-种隔离级别（原理）"><a href="#事务-4-种隔离级别（原理）" class="headerlink" title="事务 4 种隔离级别（原理）"></a>事务 4 种隔离级别（原理）</h3><ul>
+<li>RU 读未提交（最近记录）</li>
+<li>RC 读已提交（MVCC）</li>
+<li>RR 可重复读（MVCC）</li>
+<li>S 串行化（锁）</li>
+</ul>
+<h3 id="MVCC"><a href="#MVCC" class="headerlink" title="MVCC"></a>MVCC</h3><ul>
+<li>优点：写写互斥、读写不互斥</li>
+<li>实现：<ul>
+<li>原理：根据当前的 Read View 信息在事务回滚链中一直往前找，直到找到合适的记录</li>
+</ul>
+</li>
+<li>隐藏列：聚簇索引中的隐藏字段<ul>
+<li>trx_id：当前行最近被那个事务改变</li>
+<li>roll_pointer：当前行旧版本在 undo log 位置的指针</li>
+</ul>
+</li>
+<li>Read View：当前未提交事务的视图<ul>
+<li>创建时机：<ul>
+<li>RC：每次读语句开始前新建</li>
+<li>RR：当前事务开始前创建</li>
+</ul>
+</li>
+<li>内容：<ul>
+<li>m_ids：当前活跃的读写事务 id 列表</li>
+<li>min_trx_id：m_ids 中的最小值</li>
+<li>max_trx_id：m_ids 中的最大值</li>
+<li>creator_trx_id：当前事务 id</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Undo Log：事务回滚链路<ul>
+<li>单条记录内容：<ul>
+<li>变更结果</li>
+<li>trx_id：执行变更的事务 id</li>
+<li>roll_pointer：回滚指针</li>
+</ul>
+</li>
+<li>记录删除时机<ul>
+<li>不被需要时（记录的 trx_id 小于满足所有 Read View 要求的最小 min_trx_id）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>合适记录的 trx_id 标准<ul>
+<li>&#x3D; creator_trx_id</li>
+<li>&lt; min_trx_id</li>
+<li>between min_trx_id and max_trx_id and not in m_ids</li>
+</ul>
+</li>
+</ul>
+<h3 id="事务创建方式"><a href="#事务创建方式" class="headerlink" title="事务创建方式"></a>事务创建方式</h3><ul>
+<li>set autocommit&#x3D;1、begin、commit work and chain、commit、rollback</li>
+<li>set autocommit&#x3D;0、begin、commit、rollback</li>
+</ul>
+<h3 id="长事务"><a href="#长事务" class="headerlink" title="长事务"></a>长事务</h3><ul>
+<li>危害：undo log 文件过大、回滚段过长、锁占用过长</li>
+<li>排查：information_schema.innodb_trx 表</li>
+</ul>
+<h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h3 id="提高读写效率的数据结构"><a href="#提高读写效率的数据结构" class="headerlink" title="提高读写效率的数据结构"></a>提高读写效率的数据结构</h3><ul>
+<li>哈希表<ul>
+<li>键-值（key-value）存储数据的结构,hash 冲突拉链解决</li>
+<li>优点: 等值增删改查快</li>
+<li>缺点: 不是有序的,区间查询慢</li>
+<li>适用于只有等值查询的场景，比如 Memcached 及其他一些 NoSQL 引擎</li>
+</ul>
+</li>
+<li>有序数组<ul>
+<li>优点: 查询,修改快(等值,区间)</li>
+<li>缺点: 插入删除慢</li>
+<li>只适用于静态存储引擎</li>
+</ul>
+</li>
+<li>搜索树<ul>
+<li>影响因素：树高，数据磁盘密度（n 叉树）</li>
+<li>优点: 读写均衡,TC&#x3D;O(logN)</li>
+</ul>
+</li>
+<li>其他<ul>
+<li>跳表</li>
+<li>LSM 树</li>
+</ul>
+</li>
+</ul>
+<h3 id="InnoDB-的索引模型"><a href="#InnoDB-的索引模型" class="headerlink" title="InnoDB 的索引模型"></a>InnoDB 的索引模型</h3><ul>
+<li>表都是根据主键顺序以索引的形式存放的，这种存储方式的表称为索引组织表.每一个索引在 InnoDB 里面对应一棵 B+树。</li>
+<li>文中“以 InnoDB 的一个整数字段索引为例，这个 N 差不多是 1200。”—猜测这个 1200 计算方式是，innodb 默认页大小是 16kb，而一个页可以存放记录也可以存放索引+指针，索引类型为 bigint，占用 8 字节，指针默认是 6 字节。16k&#x2F;(8+6)&#x3D;1170</li>
+<li>索引类型<ul>
+<li>主键索引,也被称为聚簇索引（clustered index）,叶子节点存的是整行数据</li>
+<li>非主键索引,也被称为二级索引（secondary index）,叶子节点内容是主键的值,查询非索引字段需要回表(搜索两棵 B+树)</li>
+</ul>
+</li>
+<li>索引维护<ul>
+<li>页分裂: 影响性能,降低空间利用率</li>
+<li>页合并</li>
+<li>自增主键:<ul>
+<li>优点: 有序插入,性能好,不会触发页分裂;存储空间占用小(int-4 字节,bigint-8 字节)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>联合索引<ul>
+<li>覆盖索引: 查询索引树中保存的字段(索引+主键)</li>
+<li>最左前缀原则</li>
+<li>索引下推: MySQL 5.6 引入的索引下推优化（index condition pushdown)， 可以在索引遍历过程中，对索引中包含的字段先做判断，直接过滤掉不满足条件的记录，减少回表次数。</li>
+</ul>
+</li>
+<li>普通索引和唯一索引，应该怎么选择？<ul>
+<li>查询过程: 基本一致</li>
+<li>更新过程: 普通索引可以使用 change buffer,减少了随机磁盘访问，所以对更新性能的提升是会很明显的</li>
+<li>结论: 尽量使用普通索引</li>
+</ul>
+</li>
+<li>change buffer 的使用场景<ul>
+<li>写多读少类系统</li>
+<li>对比 redo log: redo log 主要节省的是随机写磁盘的 IO 消耗（转成顺序写），而 change buffer 主要节省的则是随机读磁盘的 IO 消耗。</li>
+</ul>
+</li>
+<li>怎么给字符串加索引?<ul>
+<li>空间和时间的权衡</li>
+<li>1.完整索引:<ul>
+<li>优点: 扫描行数少,可使用覆盖索引</li>
+<li>缺点: 占用更多空间</li>
+</ul>
+</li>
+<li>2.前缀索引<ul>
+<li>优点:节省空间;</li>
+<li>缺点:增加扫描行数,无法使用覆盖索引</li>
+<li>保证区分度尽可能高的前提下(&gt;95%),长度尽可能短</li>
+</ul>
+</li>
+<li>2.其他方式:<ul>
+<li>倒序存储</li>
+<li>hash 字段</li>
+<li>相同点: 只支持等值查询,不支持范围查询</li>
+<li>区别:<ul>
+<li>存储空间: 差不多</li>
+<li>CPU 消耗: hash &gt; 倒序</li>
+<li>查询效率: hash 更稳定,扫描行数 &lt; 倒序</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="选错索引怎么解决"><a href="#选错索引怎么解决" class="headerlink" title="选错索引怎么解决?"></a>选错索引怎么解决?</h3><ul>
+<li>show index 查看索引基数 cardinality,基数越大，索引的区分度越好。<ul>
+<li>抽样统计: 选择 N 个数据页,当变更的数据行数超过 1&#x2F;M 的时候，会自动触发重新做一次索引统计。</li>
+</ul>
+</li>
+<li>扫描行数,explain 查看</li>
+<li>1.索引统计信息不准确: 用 analyze table 来解决</li>
+<li>2.优化器误判:<ul>
+<li>1)force index;</li>
+<li>2)改写 sql;</li>
+<li>3)增加或者删除索引</li>
+</ul>
+</li>
+</ul>
+<h3 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h3><ul>
+<li><p>按加锁范围划分: 全局锁,表级锁,行锁</p>
+</li>
+<li><p>1.全局锁: Flush tables with read lock (FTWRL),保证读取时数据的一致性。</p>
+</li>
+<li><p>保证读一致性的方法</p>
+<ul>
+<li>全局锁（Mysql 层面提供）</li>
+<li>可重复读（Innodb 提供）</li>
+<li>set global readonly&#x3D;true（Mysql 层面提供）</li>
+</ul>
+</li>
+<li><p>2.表级锁</p>
+<ul>
+<li>表锁:<ul>
+<li>加锁方式：lock table xxx read&#x2F;write（加读锁或写锁）</li>
+<li>解锁方式：unlock tables xxx</li>
+<li>加锁影响：<ul>
+<li>读锁：当前线程：只读，其他线程：只读</li>
+<li>写锁：当前线程：读写，其他线程：无法操作</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>元数据锁（meta data lock，MDL): MySQL 5.5 引入<ul>
+<li>加锁方式：自动加，DML 语句加 MDL 读锁，DDL 加 MDL 写锁</li>
+<li>释放：DML 语句事务结束时释放 MDL 读锁</li>
+<li>注意: 可能锁表,建议使用 DDL NOWAIT&#x2F;WAIT n 语法</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>3.Innodb 行锁</p>
+<ul>
+<li>加锁时间：单行读写时</li>
+<li>解锁时间：事务提交之后（两阶段锁协议）</li>
+</ul>
+</li>
+<li><p>行锁的优化</p>
+<ul>
+<li>减少加锁时间（锁冲突操作在事务中越晚执行越好）</li>
+<li>减小锁的粒度（将容易发生行锁冲突的行 变为 多行，用多行表示一行）</li>
+</ul>
+</li>
+<li><p>行锁死锁</p>
+<ul>
+<li>原因：不同事务对锁出现循环依赖</li>
+<li>解决办法：<ul>
+<li>死锁检测（银行家算法），复杂度 O（n），对应 Mysql 配置 innodb_deadlock_detect，默认为 on</li>
+<li>锁等待超时，超时后将本事务回滚，释放已有锁资源。缺点：等待时间设置多短容易误伤正常等待事务。对应 Mysql 配置的 innodb_lock_wait_timeout 配置</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>高并发场景下的死锁检测导致 CPU 负载高、事务并发量低</p>
+<ul>
+<li>解决办法<ul>
+<li>应用中做并发控制、减少死锁检测算法耗时</li>
+<li>表结构设计中减小锁的粒度</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>RR 事务视图可见性判断</p>
+<ul>
+<li>版本未提交，不可见；</li>
+<li>版本已提交，但是是在视图创建后提交的，不可见；</li>
+<li>版本已提交，而且是在视图创建前提交的，可见。</li>
+</ul>
+</li>
+<li><p>更新数据都是先读后写的，而这个读，只能读当前的值，称为“当前读”（current read）</p>
+</li>
+<li><p>B 树和 B+树的区别,为什么 mysql 要用 B+树,mongodb 要用 B 树</p>
+</li>
+</ul>
+<h2 id="锁-1"><a href="#锁-1" class="headerlink" title="锁"></a>锁</h2><ul>
+<li>共享锁,排它锁</li>
+<li>记录锁,间隙锁,临键锁</li>
+</ul>
+<h2 id="慢查询排查"><a href="#慢查询排查" class="headerlink" title="慢查询排查"></a>慢查询排查</h2><h3 id="性能抖动"><a href="#性能抖动" class="headerlink" title="性能抖动"></a>性能抖动</h3><ul>
+<li>一个查询要淘汰的脏页个数太多，会导致查询的响应时间明显变长</li>
+<li>redo log 写满,要 flush 脏页,会阻塞所有更新操作</li>
+<li>解决方案: 刷脏页的控制策略</li>
+</ul>
+<h3 id="内存页-Page"><a href="#内存页-Page" class="headerlink" title="内存页 Page"></a>内存页 Page</h3><ul>
+<li>三种状态:<ul>
+<li>第一种是，还没有使用的；</li>
+<li>第二种是，使用了并且是干净页；</li>
+<li>第三种是，使用了并且是脏页(内存数据页跟磁盘数据页内容不一致)</li>
+</ul>
+</li>
+<li>刷脏页: 内存数据写入到磁盘<ul>
+<li>触发时机:<ul>
+<li>后台线程自动 flush</li>
+<li>数据页淘汰而触发 flush</li>
+</ul>
+</li>
+<li>控制策略<ul>
+<li>innodb_io_capacity: 告诉 InnoDB 你的磁盘能力</li>
+<li>innodb_max_dirty_pages_pct: 脏页比例上限，默认值是 75%</li>
+<li>innodb_flush_neighbors: 是否刷相邻的脏页,对机械硬盘有意义,ssd 不需要,8.0 后默认为 0</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="表数据删除"><a href="#表数据删除" class="headerlink" title="表数据删除"></a>表数据删除</h2><h3 id="数据存储"><a href="#数据存储" class="headerlink" title="数据存储"></a>数据存储</h3><h3 id="只查询一行"><a href="#只查询一行" class="headerlink" title="只查询一行"></a>只查询一行</h3><ul>
+<li>1.查询长时间不返回<ul>
+<li>等 MDL 锁,show processlist 查看, select blocking_pid from sys.schema_table_lock_waits,找到 process id 直接 kill</li>
+<li>等 flush</li>
+<li>等行锁,当前读会被写锁堵住,MySQL 5.7 版本，可以通过 sys.innodb_lock_waits 表查到。</li>
+</ul>
+</li>
+<li>2.查询慢<ul>
+<li>没索引,扫描行数多,查询慢</li>
+<li>一致性读时,视图版本过多,导致需通过 undo log 回溯数据</li>
+</ul>
+</li>
+</ul>
+<h2 id="集群"><a href="#集群" class="headerlink" title="集群"></a>集群</h2><h3 id="垂直拆分"><a href="#垂直拆分" class="headerlink" title="垂直拆分"></a>垂直拆分</h3><ul>
+<li>垂直分表: 也就是大表拆小表，基于列字段进行的。</li>
+<li>垂直分库: 针对的是一个系统中的不同业务进行拆分。</li>
+</ul>
+<h3 id="水平拆分"><a href="#水平拆分" class="headerlink" title="水平拆分"></a>水平拆分</h3><ul>
+<li>离散映射：如 mod 或 dayofweek ， 这种类型的映射能够很好的解决热点问题，但带来了数据迁移和历史数据问题。</li>
+<li>连续映射；如按 id 或 gmt_create_time 的连续范围做映射。这种类型的映射可以避免数据迁移，但又带来热点问题。</li>
+</ul>
+<h3 id="分库分表规则的设计和配置，长远说来必须满足以下要求"><a href="#分库分表规则的设计和配置，长远说来必须满足以下要求" class="headerlink" title="分库分表规则的设计和配置，长远说来必须满足以下要求"></a>分库分表规则的设计和配置，长远说来必须满足以下要求</h3><ul>
+<li>可以动态推送修改</li>
+<li>规则可以分层级叠加，旧规则可以在新规则下继续使用，新规则是旧规则在更宽尺度上的拓展，以此支持新旧规则的兼容，避免数据迁移</li>
+<li>用 mod 方式时，最好选 2 的指数级倍分库分表，这样方便以后切割。</li>
+</ul>
+<h3 id="数据迁移"><a href="#数据迁移" class="headerlink" title="数据迁移"></a>数据迁移</h3><ul>
+<li>停机迁移 是最简单、最安全、最快速的迁移方案，但一般线上业务系统很少允许停机迁移。</li>
+<li>双写迁移 方案就是同时写两个库，一个是老库，一个是新库。<ul>
+<li>1.导入历史数据，数据库双写（事务成功以老数据源为准），查询走老数据源，通过定时任务补全新老差异数据</li>
+<li>2.新老数据无差异，依旧双写（事务成功以新数据源为准），查询走新数据源</li>
+<li>3.稳定运行无误后，下线老数据源</li>
+</ul>
+</li>
+</ul>
+<h3 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h3><ul>
+<li>MySQL 主从复制涉及到三个线程，一个运行在主节点（log dump thread），其余两个(I&#x2F;O thread, SQL thread)运行在从节点。<ul>
+<li>Log Dump Thread：当从节点连接主节点时，主节点会创建一个 log dump 线程，用于发送 bin-log 的内容。</li>
+<li>I&#x2F;O Thread：当从节点上执行 start slave 命令之后，从节点会创建一个 I&#x2F;O 线程用来连接主节点，请求主库中更新的 bin-log。I&#x2F;O 线程接收到主节点 binlog dump 进程发来的更新之后，保存在本地 relay-log 中。</li>
+<li>SQL Thread：负责读取 relay log 中的内容，解析成具体的操作并执行，最终保证主从数据的一致性。</li>
+</ul>
+</li>
+</ul>
+<h3 id="同步模式"><a href="#同步模式" class="headerlink" title="同步模式"></a>同步模式</h3><ul>
+<li>异步模式（mysql async-mode）：MySQL 增删改操作会全部记录在 binary log 中，当 slave 节点连接 master 时，会主动从 master 处获取最新的 bin log 文件。</li>
+<li>半同步模式(mysql semi-sync)：这种模式下主节点只需要接收到其中一台从节点的返回信息，就会 commit</li>
+<li>全同步模式 是指主节点和从节点全部执行了 commit 并确认才会向客户端返回成功。</li>
+</ul>
+<h3 id="主从复制的延迟问题"><a href="#主从复制的延迟问题" class="headerlink" title="主从复制的延迟问题"></a>主从复制的延迟问题</h3><ul>
+<li>优化主从节点之间的网络延迟</li>
+<li>降低 master 负载，以减少 TPS</li>
+<li>降低 slave 负载，slave 只做备份使用，不提供服务</li>
+<li>调整 slave 参数：关闭 slave bin-log 等</li>
+<li>多线程的主从复制：不同 schema 下的表并发提交时的数据不会相互影响，即 slave 节点可以用对 relay log 中不同的 schema 各分配一个 SQL Thread，来重放 relay log 中主库已经提交的事务</li>
+</ul>
+<h3 id="全局-ID"><a href="#全局-ID" class="headerlink" title="全局 ID"></a>全局 ID</h3><ul>
+<li>数据库自增 id</li>
+<li>设置数据库 sequence 或者表自增字段步长</li>
+<li>UUID</li>
+<li>Snowflake 算法<ul>
+<li>|–1 位符号位–|–41 位时间戳–|–10 位机器 ID–|–12 位序列号–|</li>
+<li>问题:<ul>
+<li>时间的准确度问题: 每当进行 NTP 时间校准时，你的机器时间总会向后 回拨 一段时间，这时悲剧就来了：有极大可能性生成重复 ID。</li>
+</ul>
+</li>
+<li>改进:<ul>
+<li>时间戳由毫秒变为秒</li>
+<li>使用环形列表对时间戳对应的序列进行缓存<ul>
+<li>将时间戳改为秒为单位，同时可以把省出来的位交给序列。此时缓存一个小时的数据（即可以容忍一个小时的时钟回拨）也就只需要缓存 3600 个序列</li>
+<li>改进后的 Snowflake 生成的 ID 是这样组成的：|–1 位符号位–|–32 位时间戳–|–10 位机器 ID–|–21 位序列号–|</li>
+</ul>
+</li>
+<li>使用 CAS 操作避免大粒度悲观锁</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote>
+<ul>
+<li><a href=""></a></li>
+<li><a href=""></a></li>
+</ul>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/database/" class="category-chain-item">database</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MySQL/">#MySQL</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>MySQL</div>
+      <div>https://tsfans.github.io/2022/05/13/program/database/MySQL/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>tsfans</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年5月13日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/05/13/program/database/Redis/" title="Redis">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Redis</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/05/13/program/eclipse/eclipse-application/" title="eclipse application">
+                        <span class="hidden-mobile">eclipse application</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

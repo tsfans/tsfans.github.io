@@ -1,0 +1,791 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/images/avatar.png">
+  <link rel="icon" href="/images/avatar.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="tsfans">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1.SAP 来源: v2ex内推 过程:面试三轮,笔试一轮 第一轮: 电话面试,主要是常规八股文 第二轮: 公司现场做题,差不多40分钟,题目是算法easy,java编程,sql等等 第三轮: 架构师面,聊答题情况,聊项目,java八股 第四轮: manager面,介绍团队业务,聊薪资期望,表示给不了太高,让回去等通知   耗时: 每轮在1小时左右, 后三轮一下午面完, 整体流程1周内 结果: 未">
+<meta property="og:type" content="article">
+<meta property="og:title" content="202203">
+<meta property="og:url" content="https://tsfans.github.io/2022/05/13/program/interview/history/202203/index.html">
+<meta property="og:site_name" content="tsfans&#39;s blog">
+<meta property="og:description" content="1.SAP 来源: v2ex内推 过程:面试三轮,笔试一轮 第一轮: 电话面试,主要是常规八股文 第二轮: 公司现场做题,差不多40分钟,题目是算法easy,java编程,sql等等 第三轮: 架构师面,聊答题情况,聊项目,java八股 第四轮: manager面,介绍团队业务,聊薪资期望,表示给不了太高,让回去等通知   耗时: 每轮在1小时左右, 后三轮一下午面完, 整体流程1周内 结果: 未">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-05-13T01:16:56.000Z">
+<meta property="article:modified_time" content="2024-07-17T12:13:20.776Z">
+<meta property="article:author" content="tsfans">
+<meta property="article:tag" content="interview">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>202203 - tsfans&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"tsfans.github.io","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>tsfans&#39; Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/images/banner.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="202203"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        tsfans
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-05-13 09:16" pubdate>
+          2022年5月13日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="busuanzi_container_page_pv" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="busuanzi_value_page_pv"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">202203</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-SAP"><a href="#1-SAP" class="headerlink" title="1.SAP"></a>1.SAP</h2><ul>
+<li>来源: v2ex内推</li>
+<li>过程:面试三轮,笔试一轮<ul>
+<li>第一轮: 电话面试,主要是常规八股文</li>
+<li>第二轮: 公司现场做题,差不多40分钟,题目是算法easy,java编程,sql等等</li>
+<li>第三轮: 架构师面,聊答题情况,聊项目,java八股</li>
+<li>第四轮: manager面,介绍团队业务,聊薪资期望,表示给不了太高,让回去等通知</li>
+</ul>
+</li>
+<li>耗时: 每轮在1小时左右, 后三轮一下午面完, 整体流程1周内</li>
+<li>结果: 未拿到offer, 流程已走完, 估计原因是要价过高, 超出预算</li>
+<li>总结: 工作较轻松, 内容偏传统toB, 薪资预算较低</li>
+</ul>
+<h2 id="2-宜家"><a href="#2-宜家" class="headerlink" title="2.宜家"></a>2.宜家</h2><ul>
+<li>来源: 脉脉上hr主动联系</li>
+<li>过程: 意向面一轮<ul>
+<li>业务leader视频面, 聊跳槽原因, 个人规划等等</li>
+</ul>
+</li>
+<li>结果: 未开始面试流程, 可能是表达了无定居上海的计划, 公司觉得不够稳定</li>
+</ul>
+<h2 id="3-Airwallex"><a href="#3-Airwallex" class="headerlink" title="3.Airwallex"></a>3.Airwallex</h2><ul>
+<li>来源: 脉脉上hr主动联系</li>
+<li>过程: 四轮技术面<ul>
+<li>第一轮: 视频面试, 面试官先介绍自己, 然后简单聊聊项目, 然后做题, 三数之和, 要求O(N^2)复杂度, 貌似不可能达到</li>
+<li>第二轮: 视频面试, 面试官先介绍自己, 然后聊项目, 系统设计, 设计一个酒店预订系统(booking), 答的不好</li>
+<li>第三轮: 视频面试, 照例面试官先介绍自己, 然后简单聊聊项目, 然后是online coding, 实现一个方法,难度不大, 重点在思考全面和沟通, 算法题, 最多能喝几瓶汽水, 剑指offer里有, 不难</li>
+<li>第四轮: 视频面试, 架构vp面, 结合项目聊八股, 分布式事务没答好, 需要再准备, 然后是一道数学题, 画函数曲线, 用英文简单介绍你当前的团队</li>
+<li>hr面: 介绍公司业务, 优势, 了解期望薪资, 手头offer等, 薪资待定</li>
+</ul>
+</li>
+<li>耗时: 每周一面, 每轮固定1小时</li>
+<li>结果: offer, 等待薪资方案</li>
+<li>总结: hr, 面试官都很专业, 面试中沟通较多, 体验较好</li>
+</ul>
+<h2 id="4-字节电商"><a href="#4-字节电商" class="headerlink" title="4.字节电商"></a>4.字节电商</h2><ul>
+<li>来源: 脉脉上hr主动联系</li>
+<li>过程: 技术三面, hr一面<ul>
+<li>第一轮: 视频面试, 纯八股朗诵, 全程基本无交流, 算法: 合并k个有序链表, 写快了,又加了一个, k个一组反转链表, 写查询sql</li>
+<li>第二轮: 视频面试, 纯八股朗诵, 会聊聊项目, 算法: 打家劫舍, lc原题, 需要额外输出抢过的房子</li>
+<li>第三轮: 视频面试, 聊项目, 谈谈技术挑战, 针对涉及到的点进行提问, 算法: 求数字n的非空子序列, 写查询sql</li>
+<li>第四轮: hr电话面试, 聊跳槽原因,当前工作强度,当前薪资,期望薪资,表示期望薪资很难给到,有其他offer可以argue,先申请offer,薪资可以再聊</li>
+</ul>
+</li>
+<li>耗时: 每周一面, 每轮固定1小时</li>
+<li>结果: 拿到offer,薪资待定</li>
+<li>总结: 面试流程过于模板化, 缺少交流, 能感觉到面试官已经面麻了, hr业绩压力大, 很积极, 整体体验一般</li>
+</ul>
+<h2 id="5-Shopee营销"><a href="#5-Shopee营销" class="headerlink" title="5.Shopee营销"></a>5.Shopee营销</h2><ul>
+<li>来源: 脉脉上hr主动联系</li>
+<li>过程: 技术两面<ul>
+<li>第一轮: 视频面试,结合项目聊八股, 然后是算法题, 后续hr反馈技术不扎实, 让多准备一下</li>
+<li>第二轮: 视频面试,结合项目聊八股,算法是双指针相关的, 面试官提示后才想到用双指针滑动窗口, 系统设计: 设计一个短链接系统, 没看过, 直接挂</li>
+</ul>
+</li>
+<li>耗时: 周日一面1个半小时, 下周二二面1小时, 据hr说技术总共就两轮, 流程较快, 面试偏八股, 整体体验一般</li>
+<li>结果: 二面挂</li>
+<li>总结: 相关八股和常见系统设计准备不充分, 算法框架缺乏总结,<ul>
+<li>后续需要结合项目进一步加强八股(分布式事务,性能优化,阅读&lt;&lt;数据密集型应用系统设计&gt;&gt;)</li>
+<li>常见系统设计要了解(短链接,秒杀,booking,youtube,twitter,etc, 可以去youtube上找相关视频)</li>
+<li>整理刷过的算法类型,分类巩固,做题时用框架逐个往上套,加强解题能力</li>
+</ul>
+</li>
+</ul>
+<h3 id="5-1-Shopee商品"><a href="#5-1-Shopee商品" class="headerlink" title="5.1 Shopee商品"></a>5.1 Shopee商品</h3><ul>
+<li>来源: hr捞起来换组面</li>
+<li>过程: 技术两面<ul>
+<li>第一轮: 视频面试<ul>
+<li>HashMap实现, 是否线程安全? 描述一下并发resize形成环形链表的过程</li>
+<li>安全的字典实现有哪些? HashTable, ConcurrentHashMap实现, 如何保证线程安全</li>
+<li>volatile底层实现</li>
+<li>synchronize底层实现</li>
+<li>死锁条件? 有哪些场景?</li>
+<li>进程和线程的区别, 内存分别是怎么分配的(todo)</li>
+<li>TCP三次握手, 四次挥手</li>
+<li>应用拆包的粘包问题(todo)</li>
+<li>rpc框架序列化协议是什么, 怎么实现的(todo)</li>
+<li>mysql四种隔离级别, 有哪些问题, 怎么解决, MVCC解决一致性读幻读, 行锁解决当前读幻读</li>
+<li>mysql索引结构</li>
+<li>无序数组获取前k个最大数</li>
+<li>coding: 反转链表, 解析url</li>
+</ul>
+</li>
+<li>第二轮</li>
+</ul>
+</li>
+<li>结果: offer, 等待薪资方案</li>
+<li>总结:</li>
+</ul>
+<h2 id="6-eBay"><a href="#6-eBay" class="headerlink" title="6.eBay"></a>6.eBay</h2><ul>
+<li>来源: 脉脉上找人内推</li>
+<li>过程: 技术一面<ul>
+<li>第一轮: 电话面试,因为面试部门是做搜索相关的业务,所以很多搜索相关问题,基本答不上来</li>
+</ul>
+</li>
+<li>耗时: 半小时左右,背景不太匹配,没有太多可聊的</li>
+<li>结果: 一面挂</li>
+<li>总结: 业务背景差异太大的不该勉强投,如果对方考察的是项目相关技术栈就很难准备, 基本就是浪费双方时间, 不如有合适的hc的时候再投</li>
+</ul>
+<h2 id="7-MicroSoft-Purview-search"><a href="#7-MicroSoft-Purview-search" class="headerlink" title="7.MicroSoft - Purview search"></a>7.MicroSoft - Purview search</h2><ul>
+<li>来源: 找同学内推</li>
+<li>过程: hr要求英文简历, 且提前了解了口语水平, 准备简历中<ul>
+<li>第一轮: 视频面试,<ul>
+<li>先做题: 给定一棵二叉树的根节点 root 和树中的一个节点 u ，返回与 u 所在层中距离最近的右侧节点, 当 u 是所在层中最右侧的节点，返回 null, 层序遍历即可, 注意判断每层边界.</li>
+<li>聊项目, 技术栈: 框架-spring boot, 服务交互-rpc, 数据库, 注册中心, 配置中心, mq</li>
+<li>当前最有技术挑战的工作, 难点在哪里? 怎么解决?</li>
+<li>Spring bean生命周期, spring优缺点</li>
+<li>反思: 回答前提前弄清面试官真正关注的点, 可以节省很多时间, 提升双方的面试体验</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>结果: 一面挂, 反馈方向不匹配, coding不理想</li>
+<li>总结: 还是应该找相关业务的岗位, 跨度太大面试很难成功</li>
+</ul>
+<h2 id="8-Booking"><a href="#8-Booking" class="headerlink" title="8.Booking"></a>8.Booking</h2><ul>
+<li>来源: v2ex内推</li>
+<li>过程:<ul>
+<li>hr初步沟通, 会了解口语水平, 且后续面试要求全英文, 整体流程为: 一轮笔试, 一轮算法, 一轮系统设计, 一轮Culture Fit</li>
+<li>第一轮笔试, 在Hackerrank上做三道题, 限时90分钟, 需要提前适应这个网站</li>
+<li>第二轮coding, 60分钟, 2个面试官<ul>
+<li>互相做自我介绍, 然后开始做题, 偏应用: 汇率换算, 给定一系列货币换算关系, 需要判断当前货币能否换算为目标货币, 不能返回-1, 能则返回具体的值, 每次过汇附固定交易费(无向有权图的最短路径, Dijkstra算法)</li>
+<li>Q1: What’s the concrete business for this job?</li>
+<li>Q2: Have you ever worked in other company? What’s the difference between booking and other company in your opinion</li>
+</ul>
+</li>
+<li>结果: coding面挂</li>
+<li>总结: 英文沟通能力太差, 极大影响了思考过程, 问题并不难, 但没能在有限的时间内想出解决方法并清晰的阐述出来, 后续要提升表达自己思考过程的能力, 可以参考一定的模板去说</li>
+</ul>
+</li>
+</ul>
+<h2 id="9-Amazon"><a href="#9-Amazon" class="headerlink" title="9.Amazon"></a>9.Amazon</h2><ul>
+<li>来源: 脉脉找人内推</li>
+<li>过程: 申请后暂无反馈</li>
+</ul>
+<h2 id="10-coupang"><a href="#10-coupang" class="headerlink" title="10.coupang"></a>10.coupang</h2><ul>
+<li>来源: v2ex内推</li>
+<li>过程: 当前只有高职级hc, 简历未通过</li>
+</ul>
+<h2 id="11-PayPal"><a href="#11-PayPal" class="headerlink" title="11.PayPal"></a>11.PayPal</h2><ul>
+<li>来源: 公众号HJ说内推</li>
+<li>过程: 跟内推人沟通了解到当前开放的hc业务背景不匹配, 所以暂时不投递</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote>
+<ul>
+<li><a href=""></a></li>
+<li><a href=""></a></li>
+</ul>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/interview/">#interview</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>202203</div>
+      <div>https://tsfans.github.io/2022/05/13/program/interview/history/202203/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>tsfans</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年5月13日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/05/13/program/interview/history/202204/" title="202204">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">202204</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/05/13/program/system%20design/DDIA/" title="Design Data-Intensive Application">
+                        <span class="hidden-mobile">Design Data-Intensive Application</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
